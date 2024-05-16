@@ -46,7 +46,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>.\Objects\</OutputDirectory>
-          <OutputName>Projeto3</OutputName>
+          <OutputName>ProjetoC</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
@@ -380,11 +380,6 @@
               <FileName>ProjetoC.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\ProjetoC.c</FilePath>
-            </File>
-            <File>
-              <FileName>ProjetoASM.a51</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\ProjetoASM.a51</FilePath>
             </File>
           </Files>
         </Group>

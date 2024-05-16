@@ -1,0 +1,126 @@
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                    05/16/2024  12:47:35  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22.4.0, INVOKED BY:
+C:\KEIL_V5\C51\BIN\BL51.EXE .\Objects\ProjetoC.obj TO .\Objects\ProjetoC PRINT (.\Listings\ProjetoC.m51)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  .\Objects\ProjetoC.obj (PROJETOC)
+  C:\KEIL_V5\C51\LIB\C51S.LIB (?C_STARTUP)
+  C:\KEIL_V5\C51\LIB\C51S.LIB (?C_INIT)
+
+
+LINK MAP OF MODULE:  .\Objects\ProjetoC (PROJETOC)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     0004H     UNIT         ?DT?PROJETOC
+            IDATA   000CH     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+                    0003H     0008H                  *** GAP ***
+            CODE    000BH     0003H     ABSOLUTE     
+                    000EH     07F2H                  *** GAP ***
+            CODE    0800H     008CH     UNIT         ?C_C51STARTUP
+            CODE    088CH     0031H     UNIT         ?PR?TIMER0_ISR?PROJETOC
+            CODE    08BDH     0015H     UNIT         ?PR?INIT?PROJETOC
+            CODE    08D2H     000CH     UNIT         ?PR?MAIN?PROJETOC
+            CODE    08DEH     0009H     UNIT         ?C_INITSEG
+
+
+
+OVERLAY MAP OF MODULE:   .\Objects\ProjetoC (PROJETOC)
+
+
+SEGMENT
+  +--> CALLED SEGMENT
+---------------------
+?C_C51STARTUP
+  +--> ?PR?MAIN?PROJETOC
+  +--> ?C_INITSEG
+
+?PR?MAIN?PROJETOC
+  +--> ?PR?INIT?PROJETOC
+
+
+
+SYMBOL TABLE OF MODULE:  .\Objects\ProjetoC (PROJETOC)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        PROJETOC
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                  05/16/2024  12:47:35  PAGE 2
+
+
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0080H         PUBLIC        P0
+  D:0090H         PUBLIC        P1
+  D:00A0H         PUBLIC        P2
+  D:00B0H         PUBLIC        P3
+  C:088CH         PUBLIC        Timer0_ISR
+  B:00A8H.7       PUBLIC        EA
+  C:08BDH         PUBLIC        Init
+  D:0008H         PUBLIC        conta
+  C:08D2H         PUBLIC        main
+  D:0089H         PUBLIC        TMOD
+  B:00A8H.1       PUBLIC        ET0
+  D:008CH         PUBLIC        TH0
+  B:00A8H.0       PUBLIC        EX0
+  D:008AH         PUBLIC        TL0
+  B:0088H.4       PUBLIC        TR0
+  D:000AH         PUBLIC        segundos
+  -------         PROC          INIT
+  C:08BDH         LINE#         57
+  C:08BDH         LINE#         58
+  C:08BDH         LINE#         59
+  C:08BFH         LINE#         60
+  C:08C1H         LINE#         61
+  C:08C3H         LINE#         63
+  C:08C6H         LINE#         64
+  C:08C9H         LINE#         66
+  C:08CCH         LINE#         67
+  C:08CFH         LINE#         69
+  C:08D1H         LINE#         70
+  -------         ENDPROC       INIT
+  -------         PROC          TIMER0_ISR
+  C:088CH         LINE#         72
+  C:0890H         LINE#         74
+  C:0898H         LINE#         76
+  C:08A0H         LINE#         77
+  C:08A8H         LINE#         78
+  C:08AEH         LINE#         79
+  C:08AEH         LINE#         81
+  C:08B6H         LINE#         82
+  C:08B8H         LINE#         83
+  C:08B8H         LINE#         84
+  -------         ENDPROC       TIMER0_ISR
+  -------         PROC          MAIN
+  C:08D2H         LINE#         86
+  C:08D2H         LINE#         87
+  C:08D2H         LINE#         88
+  C:08D5H         LINE#         90
+  C:08D8H         LINE#         91
+  C:08DBH         LINE#         92
+  C:08DDH         LINE#         93
+  -------         ENDPROC       MAIN
+  -------         ENDMOD        PROJETOC
+
+******************************************************************************
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 005DH BYTE ( 4%) *
+******************************************************************************
+
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                  05/16/2024  12:47:35  PAGE 3
+
+
+Program Size: data=13.0 xdata=0 code=237
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

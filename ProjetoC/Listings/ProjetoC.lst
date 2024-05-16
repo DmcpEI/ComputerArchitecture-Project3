@@ -1,0 +1,121 @@
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/16/2024 12:47:35 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE PROJETOC
+OBJECT MODULE PLACED IN .\Objects\ProjetoC.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ProjetoC.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\
+                    -ProjetoC.lst) TABS(2) OBJECT(.\Objects\ProjetoC.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          
+   3          #define TempoInicial 50
+   4          
+   5          // O valor máximo da contagem de tempo é "FF + 1" = 256 microsegundos (Timer no modo 2 tem 8 bits)
+   6          // Um cilo máquina tem 6 estados e cada estado tem 2 períodos do oscilador, logo 12 períodos
+   7          // Período = 1/12*(10^6) = 1/12 microsegundos , 1 ciclo máquina = 12*Período = 12*(1/12) = 1 microsegundo
+   8          // 250 microsegundos : 256-250 = 6 = 6 microsegundos (Sendo 06 -> TH0 e 06 -> TL0)
+   9          #define TempoH 0x06
+  10          #define TempoL 0x06
+  11          
+  12          /*
+  13          Da inicio a contagem decrescente para o participante responder (Caso o tempo para a contagem esteja a ser 
+             -mostrado nos displays com o tempo inicial de 5.0 segundos)
+  14          Repoe a visualizacao do tempo inicial de 5.0 segundos nos displays (Caso a informacao com o tempo/resposta
+             - do participante esteja a ser mostrada nos displays)
+  15          */
+  16          sbit B1 = P3^2;
+  17          
+  18          /*
+  19          Ao ser pressionado qualquer um dos botoes de opcao de resposta ha uma transicao logica de ‘1’ para ‘0’
+  20          Enquanto qualquer um dos botoes de opcao de resposta continuar pressionado, e colocado o valor logico ‘0’
+  21          */
+  22          sbit Pressionado = P3^3;
+  23          
+  24          // Opcoes de resposta
+  25          sbit BA = P3^4;
+  26          sbit BB = P3^5;
+  27          sbit BC = P3^6;
+  28          sbit BD = P3^7;
+  29          
+  30          // Display D1
+  31          sbit D1A = P1^0;
+  32          sbit D1B = P1^1;
+  33          sbit D1C = P1^2;
+  34          sbit D1D = P1^3;
+  35          sbit D1E = P1^4;
+  36          sbit D1F = P1^5;
+  37          sbit D1G = P1^6;
+  38          sbit D1DF = P1^7;
+  39          
+  40          // Display D2
+  41          sbit D2A = P2^0;
+  42          sbit D2B = P2^1;
+  43          sbit D2C = P2^2;
+  44          sbit D2D = P2^3;
+  45          sbit D2E = P2^4;
+  46          sbit D2F = P2^5;
+  47          sbit D2G = P2^6;
+  48          sbit D2DF = P2^7;
+  49          
+  50          //conta = 1 -> 250 microsegundos
+  51          //conta = 400 -> 0.1 segundo
+  52          //conta = 20000 -> 5 segundos
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/16/2024 12:47:35 PAGE 2   
+
+  53          int conta = 0;
+  54          int segundos = 0;
+  55          
+  56          
+  57          void Init (void)
+  58          {
+  59   1        EA = 1;
+  60   1        ET0 = 1;
+  61   1        EX0 = 1;
+  62   1        
+  63   1        TMOD &= 0xF0;
+  64   1        TMOD |= 0x02;
+  65   1        
+  66   1        TH0 = TempoH;
+  67   1        TL0 = TempoL;
+  68   1        
+  69   1        TR0 = 1;
+  70   1      }
+  71          
+  72          void Timer0_ISR (void) interrupt 1 
+  73          {
+  74   1        conta++;
+  75   1        
+  76   1        if (conta == 400){
+  77   2          segundos++;
+  78   2          conta=0;
+  79   2        }
+  80   1        
+  81   1        if (segundos == 50){
+  82   2          TR0=0;
+  83   2        }
+  84   1      }
+  85          
+  86          void main (void)
+  87          {
+  88   1        Init();
+  89   1        
+  90   1        while(TR0){
+  91   2          P0 = segundos;
+  92   2        }
+  93   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     82    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

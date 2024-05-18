@@ -1,12 +1,16 @@
 #include <reg51.h>
 
-#define TempoInicial 500
+// Tempo inicial de 5.0 segundos
+#define TempoInicial 50
+// Valor da variavel 'conta' para 1 segundo
 #define segundo 40000
 
-// O valor máximo da contagem de tempo é "FF + 1" = 256 microsegundos (Timer no modo 2 tem 8 bits)
-// Um cilo máquina tem 6 estados e cada estado tem 2 períodos do oscilador, logo 12 períodos
-// Período = 1/12*(10^6) = 1/12 microsegundos , 1 ciclo máquina = 12*Período = 12*(1/12) = 1 microsegundo
-// 250 microsegundos : 256-250 = 6 = 6 microsegundos (Sendo 06 -> TH0 e 06 -> TL0)
+/* 
+O valor maximo da contagem de tempo e "FF + 1" = 256 microsegundos (Timer no modo 2 tem 8 bits)
+Um cilo maquina tem 6 estados e cada estado tem 2 periodos do oscilador, logo 12 periodos
+Periodo = 1/12*(10^6) = 1/12 microsegundos , 1 ciclo maquina = 12*Periodo = 12*(1/12) = 1 microsegundo
+250 microsegundos : 256-250 = 6 = 6 microsegundos (Sendo 06 -> TH0 e 06 -> TL0)
+*/
 #define TempoH 0x06
 #define TempoL 0x06
 
@@ -17,8 +21,8 @@ Repoe a visualizacao do tempo inicial de 5.0 segundos nos displays (Caso a infor
 sbit B1 = P3^2;
 
 /*
-Ao ser pressionado qualquer um dos botoes de opcao de resposta ha uma transicao logica de ‘1’ para ‘0’
-Enquanto qualquer um dos botoes de opcao de resposta continuar pressionado, e colocado o valor logico ‘0’
+Ao ser pressionado qualquer um dos botoes de opcao de resposta ha uma transicao logica de 1 para 0
+Enquanto qualquer um dos botoes de opcao de resposta continuar pressionado, e colocado o valor logico 0
 */
 sbit Pressionado = P3^3;
 
@@ -51,14 +55,19 @@ sbit D2DF = P2^7;
 //conta = 1 -> 250 microsegundos
 //conta = 400 -> 0.1 segundo
 unsigned int conta = 0;
+// Tempo inicial de 5.0 segundos
 int segundosIniciais = TempoInicial;
+// Resposta do participante (1->A, 2->B, 3->C ou 4->D)
 int resposta = 0;
 
-// Está a '0' se está a ser mostrado o tempo inicial nos displays (Nao foi clicado no botao B1)
-// Está a '1' se informação com o tempo/resposta do participante esteja a ser mostrada nos displays (Ja foi clicado no botao B1)
+// Esta a '0' se esta a ser mostrado o tempo inicial nos displays (Nao foi clicado no botao B1)
+// Esta a '1' se informaï¿½ï¿½o com o tempo/resposta do participante esteja a ser mostrada nos displays (Ja foi clicado no botao B1)
 bit clicouB1 = 0;
+// Esta a '0' se o participante ainda nao respondeu (NÃ£o clicou numa das opcoes de resposta durante os 5.0 segundos)
+// Esta a '1' se o participante ja respondeu (Clicou numa das opcoes de resposta durante os 5.0 segundos)
 bit respondeu = 0;
 
+// Segmentos dos displays com todos os numeros, simbolos e letras
 code unsigned segments[22][8] = {
 	{1, 1, 1, 1, 1, 1, 0, 0}, // -.
 	{0, 0, 0, 0, 0, 0, 1, 0}, // 0.
@@ -84,26 +93,29 @@ code unsigned segments[22][8] = {
 	{1, 0, 0, 0, 0, 1, 0, 1}, // D
 };
 
+// Inicializacao do sistema
 void Init (void)
 {
-	// Configuração do registo
-	EA = 1; // Ativa as interrupções globais
-	ET0 = 1; // Ativa a interrupção timer 0
-	EX0 = 1; // Ativa a interrupção externa 0
+	// Configuracao do registo
+	EA = 1; // Ativa as interrupcoes globais
+	ET0 = 1; // Ativa a interrupcao timer 0
+	EX0 = 1; // Ativa a interrupcao externa 0
 	
-	// Timer no modo 2, de 8 bits
-	TMOD &= 0xF0;
-	TMOD |= 0x02;
+	// Timer no modo 2, de 8 bits com auto-reload
+	TMOD &= 0xF0; // Limpa os bits menos significativos
+	TMOD |= 0x02; // Timer 0 no modo 2
 	
 	TH0 = TempoH;
 	TL0 = TempoL;
 	
 	IT0 = 1; // Interrupcao externa 0 activa a falling edge
-	TR0 = 0;
+	TR0 = 0; // Timer 0 nao comeca
 }
 
+// Interrupcao externa 0
 void External0 (void) interrupt 0 
 {
+	// Se o botao B1 foi clicado
 	if(clicouB1){
 		TR0 = 0; // Timer0 para de contar o tempo
 		segundosIniciais = TempoInicial;
@@ -111,7 +123,7 @@ void External0 (void) interrupt 0
 		clicouB1 = 0;
 	} 
 	else {
-		TR0 = 1; // Timer0 começa a contar tempo
+		TR0 = 1; // Timer0 comeca a contar tempo
 		clicouB1 = 1;
 	}
 }
@@ -204,7 +216,7 @@ void semResposta (void)
 				display(0, 7); // Exibir algo indicando que o tempo acabou (ou sem resposta)
 				TR0 = 0; // Parar o timer
 		}
-	} while (B1); // Continua no loop enquanto B1 está em nível alto (não pressionado)
+	} while (B1); // Continua no loop enquanto B1 estï¿½ em nï¿½vel alto (nï¿½o pressionado)
 	
 	conta = 0;
 	respondeu = 0;

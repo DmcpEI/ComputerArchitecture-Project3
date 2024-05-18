@@ -1,6 +1,7 @@
 #include <reg51.h>
 
-#define TempoInicial 50
+#define TempoInicial 500
+#define segundo 40000
 
 // O valor máximo da contagem de tempo é "FF + 1" = 256 microsegundos (Timer no modo 2 tem 8 bits)
 // Um cilo máquina tem 6 estados e cada estado tem 2 períodos do oscilador, logo 12 períodos
@@ -49,21 +50,14 @@ sbit D2DF = P2^7;
 
 //conta = 1 -> 250 microsegundos
 //conta = 400 -> 0.1 segundo
-//conta = 20000 -> 5 segundos
 unsigned int conta = 0;
-
 int segundosIniciais = TempoInicial;
-int segundo = 12000;
-
-// Está a '0' se está a ser mostrado o tempo inicial nos displays
-// Está a '1' se informação com o tempo/resposta do participante esteja a ser mostrada nos displays
-bit respondeu = 0;
-
-bit pressionou = 0;
-
 int resposta = 0;
 
-bit opcao = 0;
+// Está a '0' se está a ser mostrado o tempo inicial nos displays (Nao foi clicado no botao B1)
+// Está a '1' se informação com o tempo/resposta do participante esteja a ser mostrada nos displays (Ja foi clicado no botao B1)
+bit clicouB1 = 0;
+bit respondeu = 0;
 
 code unsigned segments[22][8] = {
 	{1, 1, 1, 1, 1, 1, 0, 0}, // -.
@@ -90,31 +84,6 @@ code unsigned segments[22][8] = {
 	{1, 0, 0, 0, 0, 1, 0, 1}, // D
 };
 
-void Init(void);
-void displaySegundos(int num);
-void verificaPressionado(void);
-void semResposta(void);
-void mostraInformacao(void);
-
-void main (void)
-{
-	Init();
-	
-	while(1){
-		
-		displaySegundos(segundosIniciais);
-		verificaPressionado();
-		
-		if (segundosIniciais == 0){
-			semResposta();
-		}
-		
-		if (pressionou){
-			mostraInformacao();
-		}
-	}
-}
-
 void Init (void)
 {
 	// Configuração do registo
@@ -135,15 +104,15 @@ void Init (void)
 
 void External0 (void) interrupt 0 
 {
-	if(respondeu){
+	if(clicouB1){
 		TR0 = 0; // Timer0 para de contar o tempo
 		segundosIniciais = TempoInicial;
 		conta = 0;
-		respondeu = 0;
+		clicouB1 = 0;
 	} 
 	else {
 		TR0 = 1; // Timer0 começa a contar tempo
-		respondeu = 1;
+		clicouB1 = 1;
 	}
 }
 
@@ -151,7 +120,7 @@ void Timer0_ISR (void) interrupt 1
 {
 	conta++;
 
-	if (!pressionou){
+	if (!respondeu){
 		if (conta == 400){
 			segundosIniciais--;
 			conta=0;
@@ -159,7 +128,8 @@ void Timer0_ISR (void) interrupt 1
 	}
 }
 
-void display (int num1, int num2){
+void display (int num1, int num2)
+{
 	D1A = segments[num1][0];
 	D1B = segments[num1][1];
 	D1C = segments[num1][2];
@@ -189,43 +159,61 @@ void displaySegundos (int num)
 
 void verificaPressionado(void)
 {
-	if (!BA){
-		pressionou = 1;
-		resposta = 1;
-	} else if (!BB){
-		pressionou = 1;
-		resposta = 2;
-	} else if (!BC){
-		pressionou = 1;
-		resposta = 3;
-	} else if (!BD){
-		pressionou = 1;
-		resposta = 4;
-	} else {
-		pressionou = 0;
+	
+	if (segundosIniciais != TempoInicial){
+		if (!BA){
+			while(!BA){
+				Pressionado = 0;
+				respondeu = 1;
+				resposta = 1;
+			}
+		} else if (!BB){
+			while(!BB){
+				Pressionado = 0;
+				respondeu = 1;
+				resposta = 2;
+			}
+		} else if (!BC){
+			while(!BC){
+				Pressionado = 0;
+				respondeu = 1;
+				resposta = 3;
+			}
+		} else if (!BD){
+			while(!BD){
+				Pressionado = 0;
+				respondeu = 1;
+				resposta = 4;
+			}
+		}
+		Pressionado = 1;
 	}
 }
 
 void semResposta (void)
 {
-	pressionou = 1;
 	conta = 0;
+	respondeu = 1;
 	display(1, 8);
 	TR0 = 1;
 	
-	while (B1){
-		if (conta == segundo){
-			display(0, 7);
+	do {
+
+		// Verifica se o tempo excedeu o limite
+		if (conta == segundo) {
+				display(0, 7); // Exibir algo indicando que o tempo acabou (ou sem resposta)
+				TR0 = 0; // Parar o timer
 		}
-	}
+	} while (B1); // Continua no loop enquanto B1 está em nível alto (não pressionado)
 	
-	TR0 = 0;
 	conta = 0;
+	respondeu = 0;
 }
 
 void mostraInformacao(void)
 {
-	opcao = 0;
+	bit opcao = 0;
+	conta = 0;
 	TR0 = 1;
 	
 	while (B1){
@@ -243,4 +231,24 @@ void mostraInformacao(void)
 	
 	TR0 = 0;
 	conta = 0;
+	respondeu = 0;
+}
+
+void main (void)
+{
+	Init();
+	
+	while(1){
+		
+		displaySegundos(segundosIniciais);
+		verificaPressionado();
+		
+		if (segundosIniciais <= 0){
+			semResposta();
+		}
+
+		if (respondeu && segundosIniciais < TempoInicial){
+			mostraInformacao();
+		}
+	}
 }

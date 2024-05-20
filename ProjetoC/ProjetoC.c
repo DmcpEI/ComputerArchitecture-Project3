@@ -3,7 +3,7 @@
 // Tempo inicial de 5.0 segundos
 #define TempoInicial 50
 // Valor da variavel 'conta' para 1 segundo
-#define segundo 40000
+#define segundo 4000
 
 /* 
 O valor maximo da contagem de tempo e "FF + 1" = 256 microsegundos (Timer no modo 2 tem 8 bits)
@@ -100,6 +100,7 @@ void Init (void)
 	EA = 1; // Ativa as interrupcoes globais
 	ET0 = 1; // Ativa a interrupcao timer 0
 	EX0 = 1; // Ativa a interrupcao externa 0
+	EX1 = 1; // Ativa a interrupcao externa 1
 	
 	// Timer no modo 2, de 8 bits com auto-reload
 	TMOD &= 0xF0; // Limpa os bits menos significativos
@@ -109,6 +110,7 @@ void Init (void)
 	TL0 = TempoL;
 	
 	IT0 = 1; // Interrupcao externa 0 activa a falling edge
+	IT1 = 1; // Interrupcao externa 1 activa a falling edge
 	TR0 = 0; // Timer 0 nao comeca
 }
 
@@ -125,6 +127,28 @@ void External0 (void) interrupt 0
 	else {
 		TR0 = 1; // Timer0 comeca a contar tempo
 		clicouB1 = 1;
+	}
+}
+
+// Interrupcao externa 1
+void External1 (void) interrupt 2
+{
+	while(!Pressionado){
+		if (segundosIniciais != TempoInicial){
+			if (!BA){
+				respondeu = 1;
+				resposta = 1;
+			} else if (!BB){
+				respondeu = 1;
+				resposta = 2;
+			} else if (!BC){
+				respondeu = 1;
+				resposta = 3;
+			} else if (!BD){
+				respondeu = 1;
+				resposta = 4;
+			}
+		}
 	}
 }
 
@@ -167,39 +191,6 @@ void displaySegundos (int num)
     int unidades = num % 10;
 
 		display(dezenas+1, unidades+8);
-}
-
-void verificaPressionado(void)
-{
-	
-	if (segundosIniciais != TempoInicial){
-		if (!BA){
-			while(!BA){
-				Pressionado = 0;
-				respondeu = 1;
-				resposta = 1;
-			}
-		} else if (!BB){
-			while(!BB){
-				Pressionado = 0;
-				respondeu = 1;
-				resposta = 2;
-			}
-		} else if (!BC){
-			while(!BC){
-				Pressionado = 0;
-				respondeu = 1;
-				resposta = 3;
-			}
-		} else if (!BD){
-			while(!BD){
-				Pressionado = 0;
-				respondeu = 1;
-				resposta = 4;
-			}
-		}
-		Pressionado = 1;
-	}
 }
 
 void semResposta (void)
@@ -253,7 +244,6 @@ void main (void)
 	while(1){
 		
 		displaySegundos(segundosIniciais);
-		verificaPressionado();
 		
 		if (segundosIniciais <= 0){
 			semResposta();

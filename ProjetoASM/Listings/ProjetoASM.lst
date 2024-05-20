@@ -1,0 +1,194 @@
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/20/2024 18:52:51 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\ProjetoASM.obj
+ASSEMBLER INVOKED BY: C:\Keil_v5\C51\BIN\A51.EXE ProjetoASM.a51 SET(SMALL) DEBUG PRINT(.\Listings\ProjetoASM.lst) OBJECT
+                      (.\Objects\ProjetoASM.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+  0090                 1     D1 EQU P1
+  00A0                 2     D2 EQU P2
+                       3     
+  0032                 4     TempoInicial EQU 50
+                       5     
+  0006                 6     TempoH0 EQU 0x06
+  0006                 7     TempoL0 EQU 0x06
+                       8     
+                       9     ; Definições de bits
+  00B3                10     Pressionado EQU P3.3
+  00B4                11     BA EQU P3.4
+  00B5                12     BB EQU P3.5
+  00B6                13     BC EQU P3.6
+  00B7                14     BD EQU P3.7
+                      15     
+----                  16     CSEG AT 0300H
+                      17     ; Tabela de segmentos para mostrar no display (-., 0., 1., 2., 3., 4., 5., -, 0, 1, 2, 3, 4
+                             , 5, 6, 7, 8, 9, A, B, C, D)
+0300                  18     segmentos:            
+0300 3F407924         19         DB  0x3F, 0x40, 0x79, 0x24, 0x30, 0x19, 0x12, 0xBF, 0xC0, 0xF9, 0xA4, 0xB0, 0x99, 0x92,
+                              0x82, 0xF8, 0x80, 0x90, 0x88, 0x83, 0xC6, 0xA1
+0304 301912BF                
+0308 C0F9A4B0                
+030C 999282F8                
+0310 80908883                
+0314 C6A1                    
+                      20     
+----                  21     CSEG AT 0000H
+0000 804E             22         JMP Inicio
+                      23     
+                      24     ; interrupcao externa 0
+----                  25     CSEG AT 0003H
+0003 806D             26             JMP External0_Handler
+                      27     
+                      28     ; interrupcao timer 0 (5ms)
+----                  29     CSEG AT 000BH
+000B 8076             30             JMP Timer0_Handler
+                      31     
+                      32     ; interrupcao externa 1
+----                  33     CSEG AT 0013H
+0013 807A             34             JMP External1_Handler
+                      35     
+----                  36     CSEG AT 0050H
+0050                  37     Inicio:
+                      38     
+0050 8002             39         JMP Init
+                      40     
+0052 80FE             41         SJMP $                         ; Loop infinito
+                      42                     
+0054                  43     Init:
+                      44             ; Inicialização do sistema aqui
+0054 7800             45         MOV R0, #0                     ; Inicializa registrador clicouB1 com 0
+0056 7900             46         MOV R1, #0                     ; Inicializa registrador conta com 0
+0058 7A32             47         MOV R2, #TempoInicial          ; Inicializa segundosIniciais com TempoInicial
+005A 7B00             48         MOV R3, #0                     ; Inicializa registrador respondeu com 0
+005C 7C00             49         MOV R4, #0                     ; Inicializa registrador resposta com 0
+                      50     
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/20/2024 18:52:51 PAGE     2
+
+                      51             ; Configurações iniciais e habilitação das interrupções
+005E D2AF             52         SETB EA                        ; Habilita interrupções globais
+0060 D2A8             53         SETB EX0                       ; Habilita interrupção externa 0
+0062 D2AA             54         SETB EX1                       ; Habilita interrupção externa 1
+0064 D2A9             55         SETB ET0                       ; Habilita interrupção do timer 0
+0066 758902           56         MOV TMOD, #0x02                ; Timer 0 em modo 2 (8-bit auto-reload)
+0069 758A06           57         MOV TL0, #TempoL0              ; Inicializa TL0
+006C 758C06           58         MOV TH0, #TempoH0              ; Inicializa TH0
+006F C28C             59         CLR TR0
+0071 32               60             RETI
+                      61                     
+0072                  62     External0_Handler:
+                      63         ; Verifica se clicouB1 (R0) está setado
+0072 E8               64         MOV A, R0
+0073 6009             65         JZ External0_NotClicked
+                      66         ; Se clicouB1 (R0) está setado
+0075 C28C             67         CLR TR0                        ; Timer0 para de contar o tempo
+0077 7A32             68         MOV R2, #TempoInicial          ; Reinicia segundosIniciais (R2)
+0079 7900             69         MOV R1, #0                     ; Reinicia conta (R1)
+007B 7800             70         MOV R0, #0
+007D 32               71         RETI
+007E                  72     External0_NotClicked:
+                      73         ; Se clicouB1 (R0) não está setado
+007E D28C             74         SETB TR0                       ; Timer0 começa a contar o tempo
+0080 7801             75         MOV R0, #1                     ; Seta clicouB1 (R0)
+0082 32               76         RETI
+                      77     
+0083                  78     Timer0_Handler:
+0083 09               79         INC R1                        ; Incrementa conta (R1)
+0084 EB               80         MOV A, R3                     ; Verifica se respondeu (R3) é zero
+0085 7007             81         JNZ Respondeu_True            ; Se respondeu for diferente de zero, pula para Respondeu
+                             _True
+0087 B99003           82         CJNE R1, #400, Timer0_Skip   ; Se conta (R1) não for igual a 400, pula para Timer0_Skip
+*** _______________________________________^
+*** WARNING #A52 IN 82 (ProjetoASM.a51, LINE 82): VALUE HAS BEEN TRUNCATED TO 8 BITS
+008A 1A               83         DEC R2                        ; Decrementa segundosIniciais (R2)
+008B 7900             84         MOV R1, #0                     ; Reinicia conta (R1)
+008D                  85     Timer0_Skip:
+008D 32               86         RETI
+008E                  87     Respondeu_True:
+008E 32               88         RETI
+                      89             
+008F                  90     External1_Handler:
+008F 30B32D           91         JNB Pressionado, External1_End        ; Pula para External1_End se Pressionado for 0 (não pressionado)
+0092 EA               92         MOV A, R2                        ; Carrega segundosIniciais (R2) em A
+0093 B43229           93         CJNE A, #TempoInicial, External1_End ; Pula para External1_End se segundosIniciais for diferente de TempoInicial
+0096 EA               94         MOV A, R2                        ; Carrega segundosIniciais (R2) em A novamente
+0097 6026             95         JZ External1_End                 ; Se segundosIniciais for zero, pula para External1_End
+                      96         ; Se chegou aqui, verifica as opções de resposta
+0099 30B40B           97         JNB BA, AnswerA                  ; Se BA for pressionado (0), define resposta como 1
+009C 30B50E           98         JNB BB, AnswerB                  ; Se BB for pressionado (0), define resposta como 2
+009F 30B611           99         JNB BC, AnswerC                  ; Se BC for pressionado (0), define resposta como 3
+00A2 30B714          100         JNB BD, AnswerD                  ; Se BD for pressionado (0), define resposta como 4
+00A5 80E8            101         JMP External1_Handler                    ; Se nenhum botão foi pressionado, volta para o início do loop
+00A7                 102     AnswerA:
+00A7 7C01            103         MOV R4, #1                       ; Define respondeu (R4) como 1
+00A9 7D01            104         MOV R5, #1                       ; Define resposta (R5) como 1
+00AB 8012            105         SJMP External1_End              ; Salta para External1_End
+00AD                 106     AnswerB:
+00AD 7C01            107         MOV R4, #1                       ; Define respondeu (R4) como 1
+00AF 7D02            108         MOV R5, #2                       ; Define resposta (R5) como 2
+00B1 800C            109         SJMP External1_End              ; Salta para External1_End
+00B3                 110     AnswerC:
+00B3 7C01            111         MOV R4, #1                       ; Define respondeu (R4) como 1
+00B5 7D03            112         MOV R5, #3                       ; Define resposta (R5) como 3
+00B7 8006            113         SJMP External1_End              ; Salta para External1_End
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/20/2024 18:52:51 PAGE     3
+
+00B9                 114     AnswerD:
+00B9 7C01            115         MOV R4, #1                       ; Define respondeu (R4) como 1
+00BB 7D04            116         MOV R5, #4                       ; Define resposta (R5) como 4
+00BD 8000            117         SJMP External1_End              ; Salta para External1_End
+00BF                 118     External1_End:
+00BF 32              119         RETI                             ; Retorna da interrupção externa 1
+                     120     
+                     121     END
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/20/2024 18:52:51 PAGE     4
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E               T Y P E  V A L U E   ATTRIBUTES
+
+ANSWERA. . . . . . .  C ADDR   00A7H   A   
+ANSWERB. . . . . . .  C ADDR   00ADH   A   
+ANSWERC. . . . . . .  C ADDR   00B3H   A   
+ANSWERD. . . . . . .  C ADDR   00B9H   A   
+BA . . . . . . . . .  B ADDR   00B0H.4 A   
+BB . . . . . . . . .  B ADDR   00B0H.5 A   
+BC . . . . . . . . .  B ADDR   00B0H.6 A   
+BD . . . . . . . . .  B ADDR   00B0H.7 A   
+D1 . . . . . . . . .  D ADDR   0090H   A   
+D2 . . . . . . . . .  D ADDR   00A0H   A   
+EA . . . . . . . . .  B ADDR   00A8H.7 A   
+ET0. . . . . . . . .  B ADDR   00A8H.1 A   
+EX0. . . . . . . . .  B ADDR   00A8H.0 A   
+EX1. . . . . . . . .  B ADDR   00A8H.2 A   
+EXTERNAL0_HANDLER. .  C ADDR   0072H   A   
+EXTERNAL0_NOTCLICKED  C ADDR   007EH   A   
+EXTERNAL1_END. . . .  C ADDR   00BFH   A   
+EXTERNAL1_HANDLER. .  C ADDR   008FH   A   
+INICIO . . . . . . .  C ADDR   0050H   A   
+INIT . . . . . . . .  C ADDR   0054H   A   
+P1 . . . . . . . . .  D ADDR   0090H   A   
+P2 . . . . . . . . .  D ADDR   00A0H   A   
+P3 . . . . . . . . .  D ADDR   00B0H   A   
+PRESSIONADO. . . . .  B ADDR   00B0H.3 A   
+RESPONDEU_TRUE . . .  C ADDR   008EH   A   
+SEGMENTOS. . . . . .  C ADDR   0300H   A   
+TEMPOH0. . . . . . .  N NUMB   0006H   A   
+TEMPOINICIAL . . . .  N NUMB   0032H   A   
+TEMPOL0. . . . . . .  N NUMB   0006H   A   
+TH0. . . . . . . . .  D ADDR   008CH   A   
+TIMER0_HANDLER . . .  C ADDR   0083H   A   
+TIMER0_SKIP. . . . .  C ADDR   008DH   A   
+TL0. . . . . . . . .  D ADDR   008AH   A   
+TMOD . . . . . . . .  D ADDR   0089H   A   
+TR0. . . . . . . . .  B ADDR   0088H.4 A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  1 WARNING(S), 0 ERROR(S)

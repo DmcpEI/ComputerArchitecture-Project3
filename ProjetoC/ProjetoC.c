@@ -133,21 +133,19 @@ void External0 (void) interrupt 0
 // Interrupcao externa 1
 void External1 (void) interrupt 2
 {
-	while(!Pressionado){
-		if (segundosIniciais != TempoInicial){
-			if (!BA){
-				respondeu = 1;
-				resposta = 1;
-			} else if (!BB){
-				respondeu = 1;
-				resposta = 2;
-			} else if (!BC){
-				respondeu = 1;
-				resposta = 3;
-			} else if (!BD){
-				respondeu = 1;
-				resposta = 4;
-			}
+	while(!Pressionado && segundosIniciais != TempoInicial && segundosIniciais != 0){
+		if (!BA){
+			respondeu = 1;
+			resposta = 1;
+		} else if (!BB){
+			respondeu = 1;
+			resposta = 2;
+		} else if (!BC){
+			respondeu = 1;
+			resposta = 3;
+		} else if (!BD){
+			respondeu = 1;
+			resposta = 4;
 		}
 	}
 }

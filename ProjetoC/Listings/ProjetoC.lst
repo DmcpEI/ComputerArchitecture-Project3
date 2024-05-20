@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 12:50:22 PAGE 1   
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 15:39:16 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE PROJETOC
@@ -62,7 +62,7 @@ line level    source
   50          sbit D2E = P2^4;
   51          sbit D2F = P2^5;
   52          sbit D2G = P2^6;
-C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 12:50:22 PAGE 2   
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 15:39:16 PAGE 2   
 
   53          sbit D2DF = P2^7;
   54          
@@ -126,7 +126,7 @@ line level    source
  110   1        TL0 = TempoL;
  111   1        
  112   1        IT0 = 1; // Interrupcao externa 0 activa a falling edge
-C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 12:50:22 PAGE 3   
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 15:39:16 PAGE 3   
 
  113   1        IT1 = 1; // Interrupcao externa 1 activa a falling edge
  114   1        TR0 = 0; // Timer 0 nao comeca
@@ -151,8 +151,8 @@ line level    source
  133          // Interrupcao externa 1
  134          void External1 (void) interrupt 2
  135          {
- 136   1        while(!Pressionado){
- 137   2          if (segundosIniciais != TempoInicial){
+ 136   1        while(!Pressionado && segundosIniciais != TempoInicial && segundosIniciais != 0){
+ 137   2          if (segundosIniciais != TempoInicial && segundosIniciais != 0){
  138   3            if (!BA){
  139   4              respondeu = 1;
  140   4              resposta = 1;
@@ -190,7 +190,7 @@ line level    source
  172   1        D1D = segments[num1][3];
  173   1        D1E = segments[num1][4];
  174   1        D1F = segments[num1][5];
-C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 12:50:22 PAGE 4   
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 15:39:16 PAGE 4   
 
  175   1        D1G = segments[num1][6];
  176   1        D1DF = segments[num1][7];
@@ -254,7 +254,7 @@ line level    source
  234   1        
  235   1        TR0 = 0;
  236   1        conta = 0;
-C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 12:50:22 PAGE 5   
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 15:39:16 PAGE 5   
 
  237   1        respondeu = 0;
  238   1      }
@@ -279,7 +279,7 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    992    ----
+   CODE SIZE        =   1012    ----
    CONSTANT SIZE    =    352    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----

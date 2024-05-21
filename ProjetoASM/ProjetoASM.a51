@@ -1,14 +1,20 @@
+; Displays de 7 segmentos
 D1 EQU P1
 D2 EQU P2
 
-TempoInicial EQU 50
-TempoConta EQU 400
-segundo EQU 4000
+; Variaveis
+TempoInicial EQU 50 ; Tempo inicial em segundos
+TempoConta EQU 20   ; Conjunto de 20 interrupcoes para contar 0,1 segundo
+segundo EQU 200     ; Conjunto de 200 interrupcoes para contar 1 segundo
 
+; O valor máximo da contagem de tempo é "FF + 1" = 256 microsegundos (Timer no modo 2 tem 8 bits)
+; Um ciclo máquina tem 6 estados e cada estado tem 2 períodos do oscilador, logo 12 períodos
+; Período = 1/12*(10^6) = 1/12 microsegundos, 1 ciclo máquina = 12*Período = 12*(1/12) = 1 microsegundo
+; 250 microsegundos : 256-250 = 6 = 6 microsegundos (Sendo 06 -> TH0 e 06 -> TL0)
 TempoH0 EQU 0x06
 TempoL0 EQU 0x06
 
-; Defini��es de bits
+; Definições de bits
 B1 EQU P3.2
 Pressionado EQU P3.3
 BA EQU P3.4
@@ -18,234 +24,222 @@ BD EQU P3.7
 
 CSEG AT 0300H
 ; Tabela de segmentos para mostrar no display (-., 0., 1., 2., 3., 4., 5., -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D)
-segmentos:            
+Segmentos:            
     DB  0x3F, 0x40, 0x79, 0x24, 0x30, 0x19, 0x12, 0xBF, 0xC0, 0xF9, 0xA4, 0xB0, 0x99, 0x92, 0x82, 0xF8, 0x80, 0x90, 0x88, 0x83, 0xC6, 0xA1
 
+; Funcao principal
 CSEG AT 0000H
     JMP main
 
-; interrupcao externa 0
+; Interrupção externa 0
 CSEG AT 0003H
-	JMP External0_Handler
+    JMP External0_Handler
 
-; interrupcao timer 0 (5ms)
+; Interrupção timer 0
 CSEG AT 000BH
-	JMP Timer0_Handler
+    JMP Timer0_Handler
 
-; interrupcao externa 1
+; Interrupção externa 1
 CSEG AT 0013H
-	JMP External1_Handler
+    JMP External1_Handler
 
 CSEG AT 0050H
-	
-; Main program
-; Initialize system and enter infinite loop	
 
+; Programa principal
+; Inicializa o sistema e entra no loop infinito
 main:
-    ACALL Init                       ; Initialize the system
-
+    CALL Init                           ; Inicializa o sistema
 main_loop:
-    ACALL displaySegundos            ; Display the current seconds
+    CALL displaySegundos                ; Mostra os segundos atuais no display
 	
-    MOV A, R2                        ; Check if segundosIniciais <= 0
-    CJNE A, #0, CheckResposta
+    CJNE R2, #0, CheckResposta          ; Verifica se R2 (segundos iniciais) é diferente de 0
 	
-    ACALL semResposta                ; Call semResposta if segundosIniciais <= 0
-    SJMP main_loop                   ; Continue the loop
-
+    CALL semResposta                    ; Chama semResposta se segundosIniciais <= 0
+    JMP main_loop                       ; Continua o loop
 CheckResposta:
-    MOV A, R4                        ; Check if respondeu == 1
-    JZ main_loop                     ; If respondeu == 0, continue the loop
+    MOV A, R3                           ; Verifica se respondeu == 1
+    JZ main_loop                        ; Se respondeu == 0, continua o loop
 	
-    MOV A, R2                        ; Check if segundosIniciais < TempoInicial
-    CJNE A, #TempoInicial, CallMostraInformacao
+    CJNE R2, #TempoInicial, CheckMostraInformacao      ; Verifica se segundosIniciais < TempoInicial
 	
-    SJMP main_loop                   ; Continue the loop
+    JMP main_loop                       ; Continua o loop
+CheckMostraInformacao:
+    CALL mostraInformacao               ; Chama mostraInformacao se respondeu e segundosIniciais < TempoInicial
+    JMP main_loop                       ; Continua o loop
 
-CallMostraInformacao:
-    ACALL mostraInformacao           ; Call mostraInformacao if respondeu and segundosIniciais < TempoInicial
-    
-	SJMP main_loop                   ; Continue the loop
-		
 Init:
-	; Inicializa��o do sistema aqui
-    MOV R0, #0                     ; Inicializa registrador clicouB1 com 0
-    MOV R1, #0                     ; Inicializa registrador conta com 0
-    MOV R2, #TempoInicial          ; Inicializa segundosIniciais com TempoInicial
-    MOV R3, #0                     ; Inicializa registrador respondeu com 0
-    MOV R4, #0                     ; Inicializa registrador resposta com 0
+    ; Inicialização do sistema
+    MOV R0, #0                          ; Inicializa registrador clicouB1 com 0
+    MOV R1, #0                          ; Inicializa registrador conta com 0
+    MOV R2, #TempoInicial               ; Inicializa segundosIniciais com TempoInicial
+    MOV R3, #0                          ; Inicializa registrador respondeu com 0
+    MOV R4, #0                          ; Inicializa registrador resposta com 0
 
-	; Configura��es iniciais e habilita��o das interrup��es
-    SETB EA                        ; Habilita interrup��es globais
-    SETB EX0                       ; Habilita interrup��o externa 0
-    SETB EX1                       ; Habilita interrup��o externa 1
-    SETB ET0                       ; Habilita interrup��o do timer 0
-    MOV TMOD, #0x02                ; Timer 0 em modo 2 (8-bit auto-reload)
-    MOV TL0, #TempoL0              ; Inicializa TL0
-    MOV TH0, #TempoH0              ; Inicializa TH0
-    CLR TR0
-	RETI
+    ; Configurações iniciais e habilitação das interrupções
+    MOV IE, #87H                        ; EA=1, ET1=0, EX1=1, ET0=1 e EX0=1 -> IE=10000111
+    MOV IP, #00H                        ; IP = 0
+	
+    ; Configuração Registro TMOD
+    MOV TMOD, #00000010b                ; Define o timer 0 no modo 2 (8 bits - auto reload) 
+	
+    MOV TL0, #TempoL0                   ; Inicializa TL0
+    MOV TH0, #TempoH0                   ; Inicializa TH0
+	
+    CLR TR0                             ; Inicializa TR0 desligado
+    SETB IT0                            ; Habilita interrupção externa 0
+    SETB IT1                            ; Habilita interrupção externa 1
+    RET
 		
+; Tratamento de interrupcao externa 0
 External0_Handler:
-    ; Verifica se clicouB1 (R0) est� setado
-    MOV A, R0
-    JZ External0_NotClicked
-    ; Se clicouB1 (R0) est� setado
-    CLR TR0                        ; Timer0 para de contar o tempo
-    MOV R2, #TempoInicial          ; Reinicia segundosIniciais (R2)
-    MOV R1, #0                     ; Reinicia conta (R1)
-    MOV R0, #0
+    CJNE R0, #0, External0_Clicked      ; Verifica se clicouB1 (R0) está setado
+    JMP External0_NotClicked            ; Se clicouB1 (R0) não está setado, salta para External0_NotClicked
+External0_Clicked:
+    CLR TR0                             ; Timer0 para de contar o tempo
+    MOV R2, #TempoInicial               ; Reinicia segundosIniciais (R2)
+    MOV R1, #0                          ; Reinicia conta (R1)
+    MOV R0, #0                          ; Reinicia clicouB1 (R0)
     RETI
 External0_NotClicked:
-    ; Se clicouB1 (R0) n�o est� setado
-    SETB TR0                       ; Timer0 come�a a contar o tempo
-    MOV R0, #1                     ; Seta clicouB1 (R0)
+    SETB TR0                            ; Timer0 começa a contar o tempo
+    MOV R0, #1                          ; Seta clicouB1 (R0)
     RETI
 
+; Tratamento de interrupcao do timer 0
 Timer0_Handler:
-    INC R1                        ; Incrementa conta (R1)
-    MOV A, R3                     ; Verifica se respondeu (R3) � zero
-    JNZ Respondeu_True            ; Se respondeu for diferente de zero, pula para Respondeu_True
-    CJNE R1, #TempoConta, Timer0_Skip    ; Se conta (R1) n�o for igual a 400, pula para Timer0_Skip
-    DEC R2                        ; Decrementa segundosIniciais (R2)
-    MOV R1, #0                    ; Reinicia conta (R1)
-Timer0_Skip:
+    INC R7                              ; Incrementa o contador para 20 interrupções
+    CJNE R7, #20, Timer0_End            ; Se R7 não for igual a 20, salta para Timer0_End
+
+    INC R1                              ; Incrementa R1 a cada 20 interrupções
+    MOV R7, #0                          ; Reinicia o contador
+
+    CJNE R3, #0, Timer0_End             ; Se respondeu for diferente de zero, salta para Timer0_End
+    CJNE R1, #TempoConta, Timer0_End    ; Se conta (R1) for diferente de TempoConta, salta para Timer0_End
+
+    DEC R2                              ; Decrementa segundosIniciais (R2)
+    MOV R1, #0                          ; Reinicia conta (R1)
+Timer0_End:
     RETI
-Respondeu_True:
-    RETI
-	
+
+; Tratamento de interrupcao externa 1
 External1_Handler:
-    JNB Pressionado, External1_End        ; Pula para External1_End se Pressionado for 0 (n�o pressionado)
-    MOV A, R2                        ; Carrega segundosIniciais (R2) em A
-    CJNE A, #TempoInicial, External1_End ; Pula para External1_End se segundosIniciais for diferente de TempoInicial
-    MOV A, R2                        ; Carrega segundosIniciais (R2) em A novamente
-    JZ External1_End                 ; Se segundosIniciais for zero, pula para External1_End
-    ; Se chegou aqui, verifica as op��es de resposta
-    JNB BA, AnswerA                  ; Se BA for pressionado (0), define resposta como 1
-    JNB BB, AnswerB                  ; Se BB for pressionado (0), define resposta como 2
-    JNB BC, AnswerC                  ; Se BC for pressionado (0), define resposta como 3
-    JNB BD, AnswerD                  ; Se BD for pressionado (0), define resposta como 4
-    JMP External1_Handler                    ; Se nenhum bot�o foi pressionado, volta para o in�cio do loop
+    CJNE R2, #TempoInicial, SecondsNotZero  ; Verifica se segundosIniciais (R2) é diferente de TempoInicial
+    CJNE R2, #0, SecondsNotZero         ; Verifica se segundosIniciais (R2) é diferente de 0
+    JMP External1_End                   ; Se segundosIniciais (R2) for igual a 0 e difrente do TempoInicial, salta para External1_End
+SecondsNotZero:
+    JNB BA, AnswerA                     ; Se BA for pressionado (0), define resposta como 1
+    JNB BB, AnswerB                     ; Se BB for pressionado (0), define resposta como 2
+    JNB BC, AnswerC                     ; Se BC for pressionado (0), define resposta como 3
+    JNB BD, AnswerD                     ; Se BD for pressionado (0), define resposta como 4
+    JMP External1_Handler               ; Se nenhum botão foi pressionado, volta para o início do loop
 AnswerA:
-    MOV R4, #1                       ; Define respondeu (R4) como 1
-    MOV R5, #1                       ; Define resposta (R5) como 1
-    SJMP External1_End              ; Salta para External1_End
+    MOV R3, #1                          ; Define respondeu (R3) como 1
+    MOV R4, #1                          ; Define resposta (R4) como 1
+    JMP External1_End                   ; Salta para External1_End
 AnswerB:
-    MOV R4, #1                       ; Define respondeu (R4) como 1
-    MOV R5, #2                       ; Define resposta (R5) como 2
-    SJMP External1_End              ; Salta para External1_End
+    MOV R3, #1                          ; Define respondeu (R3) como 1
+    MOV R4, #2                          ; Define resposta (R4) como 2
+    JMP External1_End                   ; Salta para External1_End
 AnswerC:
-    MOV R4, #1                       ; Define respondeu (R4) como 1
-    MOV R5, #3                       ; Define resposta (R5) como 3
-    SJMP External1_End              ; Salta para External1_End
+    MOV R3, #1                          ; Define respondeu (R3) como 1
+    MOV R4, #3                          ; Define resposta (R4) como 3
+    JMP External1_End                   ; Salta para External1_End
 AnswerD:
-    MOV R4, #1                       ; Define respondeu (R4) como 1
-    MOV R5, #4                       ; Define resposta (R5) como 4
-    SJMP External1_End              ; Salta para External1_End
+    MOV R3, #1                          ; Define respondeu (R3) como 1
+    MOV R4, #4                          ; Define resposta (R4) como 4
+    JMP External1_End                   ; Salta para External1_End
 External1_End:
-    RETI                             ; Retorna da interrup��o externa 1
-	
-; Function to display numbers on two 7-segment displays
-; Arguments: num1 in R5, num2 in R6
-; Assumes segmentos array starts at label `segmentos`
+    RETI                                ; Retorna da interrupção externa 1
 
+; Função para mostrar números nos dois displays de 7 segmentos
+; Argumentos: Caracter do display 1 em R5, Caracter do display 2 em R6
 display:
-    MOV DPTR, #segmentos            ; Load address of segmentos array
+    MOV DPTR, #Segmentos                ; Carrega o endereço do array Segmentos
 
-    MOV A, R5                       ; Get num1
-    MOVC A, @A+DPTR                 ; Load segmentos[num1]
-    MOV P1, A                       ; Set D1
+    MOV A, R5                           ; Pega num1
+    MOVC A, @A+DPTR                     ; Carrega Segmentos[num1]
+    MOV P1, A                           ; Define D1
 
-    MOV A, R6                       ; Get num2
-    ADD A, #8                       ; Offset for the second digit (segmentos array continues)
-    MOVC A, @A+DPTR
-    MOV P2, A                       ; Set D2
+    MOV A, R6                           ; Pega num2
+    MOVC A, @A+DPTR                     ; Carrega Segmentos[num2]
+    MOV P2, A                           ; Define D2
 
     RET
-	
-; Function to display seconds on two 7-segment displays
-; Argument: num in R2
 
+; Função para mostrar segundos nos dois displays de 7 segmentos
+; Argumento: Segundos em R2
 displaySegundos:
-    MOV A, R2
-    MOV B, #10
-    DIV AB                          ; A = dezenas, B = unidades
+    MOV A, R2                           ; Pega segundos
+    MOV B, #10                          ; Divide por 10
+    DIV AB                              ; A = segundos / 10, B = segundos % 10
 
-    INC A                           ; dezenas + 1
-    MOV R5, A                       ; Pass num1 to display
+    INC A                               ; dezenas + 1
+    MOV R5, A                           ; Passa num1 para o display
 
-    MOV A, B
-    ADD A, #8                       ; unidades + 8
-    MOV R6, A                       ; Pass num2 to display
+    MOV A, B                            ; unidades
+    ADD A, #8                           ; unidades + 8
+    MOV R6, A                           ; Passa num2 para o display
 
-    ACALL display
+    CALL display                        ; Mostra nos displays   
     RET
-	
-; Function to indicate no response
-; No arguments
 
+; Função para indicar ausência de resposta e tempo final
 semResposta:
-    MOV R3, #0                      ; Reset conta (R3)
-    MOV R4, #1                      ; Set respondeu (R4) to 1
+    MOV R1, #0                          ; Reinicia conta (R1)
+    MOV R3, #1                          ; Define respondeu (R3) como 1
 
-    MOV R5, #1                      ; Display (1, 8)
-    MOV R6, #8
-    ACALL display
+    MOV R5, #1                          ; Atribui a R5 o valor para 0.
+    MOV R6, #8                          ; Atribui a R6 o valor para 0
+    CALL display                        ; Mostra o 0.0      
 
-    SETB TR0                        ; Start Timer0
-
+    SETB TR0                            ; Inicia Timer0
 semResposta_Loop:
-    MOV A, R3
-    CJNE A, #segundo, NoTimeout     ; Check if conta == segundo
-    MOV R5, #0                      ; Display (0, 7)
-    MOV R6, #7
-    ACALL display
-    CLR TR0                         ; Stop Timer0
-
+    CJNE R1, #segundo, NoTimeout        ; Verifica se conta == segundo
+    MOV R5, #0                          ; Atribui a R5 o valor para -.
+    MOV R6, #7                          ; Atribui a R6 o valor para -         
+    CALL display                        ; Mostra o -.-
+    CLR TR0                             ; Para Timer0
 NoTimeout:
-    JB B1, semResposta_Loop       ; Loop while B1 (P3.2) is high (not pressed)
+    JB B1, semResposta_Loop             ; Loop enquanto B1 (P3.2) está alto (não pressionado)
 
-    MOV R3, #0                      ; Reset conta (R3)
-    MOV R4, #0                      ; Reset respondeu (R4)
+    MOV R1, #0                          ; Reinicia conta (R1)         
+    MOV R3, #0                          ; Define respondeu (R3) como 0
     RET
 
-; Function to show information on the display
-; No arguments
-
+; Função para mostrar informação no display, que neste caso e a opção escolhida e os segundos restantes
 mostraInformacao:
-    MOV R7, #0                          ; Reset opcao (R7) to 0
-    MOV R3, #0                          ; Reset conta (R3)
-    SETB TR0                        ; Start Timer0
-
+    CLR TR0                             ; Para Timer0
+    MOV B, #0                           ; Define opcao (B) para 0
+    MOV R1, #0                          ; Reinicia conta (R1)
+    SETB TR0                            ; Inicia Timer0
 mostraInformacao_Loop:
-    JB B1, mostraInformacao_Check ; Loop while B1 (P3.2) is high (not pressed)
+    JNB B1, mostraInformacao_Fim        ; Sai do loop se B1 (P3.2) for pressionado
+    
+    CJNE R1, #segundo, mostraInformacao_Loop    ; Verifica se conta == segundo
 
-mostraInformacao_Check:
-    MOV A, R3
-    CJNE A, #segundo, mostraInformacao_Loop ; Check if conta == segundo
-
-    MOV A, R7
-    JZ DisplaySeconds               ; If opcao == 0, display seconds
-
-    MOV R5, #0
-    MOV A, R5
-    ADD A, #17
-    MOV R6, A
-    ACALL display                   ; Display (0, resposta + 17)
-    MOV R7, #0                          ; Set opcao to 0
-    SJMP mostraInformacao_Loop
-
+    MOV A, B                            ; Pega opcao         
+    CJNE A, #0, DisplayOption           ; Se opcao não é 0, mostra a opção senao mostra os segundos
 DisplaySeconds:
-    MOV A, R2
-    ACALL displaySegundos           ; Display seconds
-    MOV R7, #1                         ; Set opcao to 1
+    CALL displaySegundos                ; Mostra os segundos
 
-    MOV R3, #0                          ; Reset conta (R3)
-    SJMP mostraInformacao_Loop
+    MOV B, #1                           ; Define opcao para 1
+    MOV R1, #0                          ; Reinicia conta (R1)
+    JMP mostraInformacao_Loop           ; Continua o loop
+DisplayOption:
+    MOV R5, #0                          ; Atribui a R5 o valor para -.
+    MOV A, R4                           ; Pega resposta
+    ADD A, #17                          ; A = resposta + 17
+    MOV R6, A                           ; Atribui a R6 o valor para a resposta
 
-    CLR TR0                         ; Stop Timer0
-    MOV R3, #0                          ; Reset conta (R3)
-    MOV R4, #0                          ; Reset respondeu (R4)
+    CALL display                        ; Mostra a opção escolhida
+
+    MOV B, #0                           ; Define opcao para 0
+    MOV R1, #0                          ; Reinicia conta (R1)
+    JMP mostraInformacao_Loop           ; Continua o loop
+mostraInformacao_Fim:
+    CLR TR0                             ; Para Timer0
+    MOV R1, #0                          ; Reinicia conta (R1)
+    MOV R3, #0                          ; Reinicia respondeu (R3)
     RET
 
-END
+END                                     ; Fim do programa

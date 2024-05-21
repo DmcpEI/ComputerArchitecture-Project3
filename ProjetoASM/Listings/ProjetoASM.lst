@@ -1,19 +1,19 @@
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 01:03:55 PAGE     1
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 21:22:31 PAGE     1
 
 
 MACRO ASSEMBLER A51 V8.2.7.0
 OBJECT MODULE PLACED IN .\Objects\ProjetoASM.obj
-ASSEMBLER INVOKED BY: D:\KeliuVision\C51\BIN\A51.EXE ProjetoASM.a51 SET(SMALL) DEBUG PRINT(.\Listings\ProjetoASM.lst) OB
-                      JECT(.\Objects\ProjetoASM.obj) EP
+ASSEMBLER INVOKED BY: C:\Keil_v5\C51\BIN\A51.EXE ProjetoASM.a51 SET(SMALL) DEBUG PRINT(.\Listings\ProjetoASM.lst) OBJECT
+                      (.\Objects\ProjetoASM.obj) EP
 
 LOC  OBJ            LINE     SOURCE
 
   0090                 1     D1 EQU P1
   00A0                 2     D2 EQU P2
                        3     
-  0032                 4     TempoInicial EQU 50
-  0190                 5     TempoConta EQU 400
-  0FA0                 6     segundo EQU 4000
+  00FF                 4     TempoInicial EQU 255
+  0014                 5     TempoConta EQU 20
+  00C8                 6     segundo EQU 200
                        7     
   0006                 8     TempoH0 EQU 0x06
   0006                 9     TempoL0 EQU 0x06
@@ -25,11 +25,11 @@ LOC  OBJ            LINE     SOURCE
   00B5                15     BB EQU P3.5
   00B6                16     BC EQU P3.6
   00B7                17     BD EQU P3.7
-                      18     
+                      18             
 ----                  19     CSEG AT 0300H
                       20     ; Tabela de segmentos para mostrar no display (-., 0., 1., 2., 3., 4., 5., -, 0, 1, 2, 3, 4
                              , 5, 6, 7, 8, 9, A, B, C, D)
-0300                  21     segmentos:            
+0300                  21     Segmentos:            
 0300 3F407924         22         DB  0x3F, 0x40, 0x79, 0x24, 0x30, 0x19, 0x12, 0xBF, 0xC0, 0xF9, 0xA4, 0xB0, 0x99, 0x92,
                               0x82, 0xF8, 0x80, 0x90, 0x88, 0x83, 0xC6, 0xA1
 0304 301912BF                
@@ -47,11 +47,11 @@ LOC  OBJ            LINE     SOURCE
                       30     
                       31     ; interrupcao timer 0 (5ms)
 ----                  32     CSEG AT 000BH
-000B 0198             33             JMP Timer0_Handler
+000B 019A             33             JMP Timer0_Handler
                       34     
                       35     ; interrupcao externa 1
 ----                  36     CSEG AT 0013H
-0013 01A4             37             JMP External1_Handler
+0013 01AB             37             JMP External1_Handler
                       38     
 ----                  39     CSEG AT 0050H
                       40             
@@ -59,292 +59,295 @@ LOC  OBJ            LINE     SOURCE
                       42     ; Initialize system and enter infinite loop     
                       43     
 0050                  44     main:
-0050 1169             45         ACALL Init                       ; Initialize the system
-                      46     
-0052                  47     main_loop:
-0052 11E3             48         ACALL displaySegundos            ; Display the current seconds
-                      49             
-0054 EA               50         MOV A, R2                        ; Check if segundosIniciais <= 0
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 01:03:55 PAGE     2
+0050 1167             45         CALL Init                       ; Initialize the system
+0052                  46     main_loop:
+0052 11E6             47         CALL displaySegundos            ; Display the current seconds
+                      48             
+0054 BA0004           49         CJNE R2, #0, CheckResposta
+                      50             
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 21:22:31 PAGE     2
 
-0055 B40004           51         CJNE A, #0, CheckResposta
-                      52             
-0058 11F2             53         ACALL semResposta                ; Call semResposta if segundosIniciais <= 0
-005A 80F6             54         SJMP main_loop                   ; Continue the loop
-                      55     
-005C                  56     CheckResposta:
-005C EC               57         MOV A, R4                        ; Check if respondeu == 1
-005D 60F3             58         JZ main_loop                     ; If respondeu == 0, continue the loop
+0057 11F5             51         CALL semResposta                ; Call semResposta if segundosIniciais <= 0
+0059 80F7             52         JMP main_loop                   ; Continue the loop
+005B                  53     CheckResposta:
+005B EB               54         MOV A, R3                        ; Check if respondeu == 1
+005C 60F4             55         JZ main_loop                     ; If respondeu == 0, continue the loop
+                      56             
+                      57             ; Check if segundosIniciais < TempoInicial
+005E BAFF02           58         CJNE R2, #TempoInicial, CheckMostraInformacao
                       59             
-005F EA               60         MOV A, R2                        ; Check if segundosIniciais < TempoInicial
-0060 B43202           61         CJNE A, #TempoInicial, CallMostraInformacao
-                      62             
-0063 80ED             63         SJMP main_loop                   ; Continue the loop
-                      64     
-0065                  65     CallMostraInformacao:
-0065 3112             66         ACALL mostraInformacao           ; Call mostraInformacao if respondeu and segundosInici
-                             ais < TempoInicial
-                      67         
-0067 80E9             68             SJMP main_loop                   ; Continue the loop
-                      69                     
-0069                  70     Init:
-                      71             ; Inicialização do sistema aqui
-0069 7800             72         MOV R0, #0                     ; Inicializa registrador clicouB1 com 0
-006B 7900             73         MOV R1, #0                     ; Inicializa registrador conta com 0
-006D 7A32             74         MOV R2, #TempoInicial          ; Inicializa segundosIniciais com TempoInicial
-006F 7B00             75         MOV R3, #0                     ; Inicializa registrador respondeu com 0
-0071 7C00             76         MOV R4, #0                     ; Inicializa registrador resposta com 0
-                      77     
-                      78             ; Configurações iniciais e habilitação das interrupções
-0073 D2AF             79         SETB EA                        ; Habilita interrupções globais
-0075 D2A8             80         SETB EX0                       ; Habilita interrupção externa 0
-0077 D2AA             81         SETB EX1                       ; Habilita interrupção externa 1
-0079 D2A9             82         SETB ET0                       ; Habilita interrupção do timer 0
-007B 758902           83         MOV TMOD, #0x02                ; Timer 0 em modo 2 (8-bit auto-reload)
-007E 758A06           84         MOV TL0, #TempoL0              ; Inicializa TL0
-0081 758C06           85         MOV TH0, #TempoH0              ; Inicializa TH0
-0084 C28C             86         CLR TR0
-0086 32               87             RETI
+0061 80EF             60         JMP main_loop                   ; Continue the loop
+0063                  61     CheckMostraInformacao:
+0063 3114             62         CALL mostraInformacao           ; Call mostraInformacao if respondeu and segundosInicia
+                             is < TempoInicial
+0065 80EB             63             JMP main_loop                   ; Continue the loop
+                      64             
+                      65             
+0067                  66     Init:
+                      67             ; Inicialização do sistema
+0067 7800             68         MOV R0, #0                     ; Inicializa registrador clicouB1 com 0
+0069 7900             69         MOV R1, #0                     ; Inicializa registrador conta com 0
+006B 7AFF             70         MOV R2, #TempoInicial          ; Inicializa segundosIniciais com TempoInicial
+006D 7B00             71         MOV R3, #0                     ; Inicializa registrador respondeu com 0
+006F 7C00             72         MOV R4, #0                     ; Inicializa registrador resposta com 0
+                      73     
+                      74             ; Configurações iniciais e habilitação das interrupções
+0071 75A887           75         MOV IE, #87H                                        ;EA=1, ET1=0, EX1=1, ET0=1 e EX0=1 
+                             -> IE=10000111
+0074 75B800           76             MOV IP, #00H                                    ;IP = 0
+                      77             
+                      78             ;Configuracao Registo TMOD
+0077 758902           79             MOV TMOD, #00000010b ;definir o timer 0 no modo 2 (8 bit - auto reload) 
+                      80             
+007A 758A06           81         MOV TL0, #TempoL0              ; Inicializa TL0
+007D 758C06           82         MOV TH0, #TempoH0              ; Inicializa TH0
+                      83             
+0080 C28C             84         CLR TR0
+0082 D288             85             SETB IT0
+0084 D28A             86             SETB IT1
+0086 22               87             RET
                       88                     
-0087                  89     External0_Handler:
-                      90         ; Verifica se clicouB1 (R0) está setado
-0087 E8               91         MOV A, R0
-0088 6009             92         JZ External0_NotClicked
-                      93         ; Se clicouB1 (R0) está setado
-008A C28C             94         CLR TR0                        ; Timer0 para de contar o tempo
-008C 7A32             95         MOV R2, #TempoInicial          ; Reinicia segundosIniciais (R2)
-008E 7900             96         MOV R1, #0                     ; Reinicia conta (R1)
-0090 7800             97         MOV R0, #0
-0092 32               98         RETI
-0093                  99     External0_NotClicked:
-                     100         ; Se clicouB1 (R0) não está setado
-0093 D28C            101         SETB TR0                       ; Timer0 começa a contar o tempo
-0095 7801            102         MOV R0, #1                     ; Seta clicouB1 (R0)
-0097 32              103         RETI
-                     104     
-0098                 105     Timer0_Handler:
-0098 09              106         INC R1                        ; Incrementa conta (R1)
-0099 EB              107         MOV A, R3                     ; Verifica se respondeu (R3) é zero
-009A 7007            108         JNZ Respondeu_True            ; Se respondeu for diferente de zero, pula para Respondeu
-                             _True
-009C B99003          109         CJNE R1, #TempoConta, Timer0_Skip    ; Se conta (R1) não for igual a 400, pula para Tim
-                             er0_Skip
-*** _______________________________________^
-*** WARNING #A52 IN 109 (ProjetoASM.a51, LINE 109): VALUE HAS BEEN TRUNCATED TO 8 BITS
-009F 1A              110         DEC R2                        ; Decrementa segundosIniciais (R2)
-00A0 7900            111         MOV R1, #0                    ; Reinicia conta (R1)
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 01:03:55 PAGE     3
+                      89                     
+0087                  90     External0_Handler:
+                      91         ; Verifica se clicouB1 (R0) está setado
+0087 B80002           92         CJNE R0, #0, External0_Clicked
+008A 8009             93             JMP External0_NotClicked
+008C                  94     External0_Clicked:
+008C C28C             95         CLR TR0                        ; Timer0 para de contar o tempo
+008E 7AFF             96         MOV R2, #TempoInicial          ; Reinicia segundosIniciais (R2)
+0090 7900             97         MOV R1, #0                     ; Reinicia conta (R1)
+0092 7800             98         MOV R0, #0
+0094 32               99         RETI
+0095                 100     External0_NotClicked:
+                     101         ; Se clicouB1 (R0) não está setado
+0095 D28C            102         SETB TR0                       ; Timer0 começa a contar o tempo
+0097 7801            103         MOV R0, #1                     ; Seta clicouB1 (R0)
+0099 32              104         RETI
+                     105     
+                     106     
+009A                 107     Timer0_Handler:
+009A 0F              108         INC R7                               ; Increment the counter for 20 interruptions
+009B BF140C          109         CJNE R7, #20, Timer0_End             ; If R0 is not equal to 20, jump to Timer0_End
+                     110     
+009E 09              111         INC R1                               ; Increment R1 every 20 interruptions
+009F 7F00            112         MOV R7, #0                           ; Reset the counter
+                     113     
+00A1 BB0006          114         CJNE R3, #0, Timer0_End              ; If respondeu is not zero, jump to Timer0_End
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 21:22:31 PAGE     3
 
-00A2                 112     Timer0_Skip:
-00A2 32              113         RETI
-00A3                 114     Respondeu_True:
-00A3 32              115         RETI
-                     116             
-00A4                 117     External1_Handler:
-00A4 30B32D          118         JNB Pressionado, External1_End        ; Pula para External1_End se Pressionado for 0 (não pressionado)
-00A7 EA              119         MOV A, R2                        ; Carrega segundosIniciais (R2) em A
-00A8 B43229          120         CJNE A, #TempoInicial, External1_End ; Pula para External1_End se segundosIniciais for diferente de TempoInicial
-00AB EA              121         MOV A, R2                        ; Carrega segundosIniciais (R2) em A novamente
-00AC 6026            122         JZ External1_End                 ; Se segundosIniciais for zero, pula para External1_End
-                     123         ; Se chegou aqui, verifica as opções de resposta
-00AE 30B40B          124         JNB BA, AnswerA                  ; Se BA for pressionado (0), define resposta como 1
-00B1 30B50E          125         JNB BB, AnswerB                  ; Se BB for pressionado (0), define resposta como 2
-00B4 30B611          126         JNB BC, AnswerC                  ; Se BC for pressionado (0), define resposta como 3
-00B7 30B714          127         JNB BD, AnswerD                  ; Se BD for pressionado (0), define resposta como 4
-00BA 80E8            128         JMP External1_Handler                    ; Se nenhum botão foi pressionado, volta para o início do loop
-00BC                 129     AnswerA:
-00BC 7C01            130         MOV R4, #1                       ; Define respondeu (R4) como 1
-00BE 7D01            131         MOV R5, #1                       ; Define resposta (R5) como 1
-00C0 8012            132         SJMP External1_End              ; Salta para External1_End
-00C2                 133     AnswerB:
-00C2 7C01            134         MOV R4, #1                       ; Define respondeu (R4) como 1
-00C4 7D02            135         MOV R5, #2                       ; Define resposta (R5) como 2
-00C6 800C            136         SJMP External1_End              ; Salta para External1_End
-00C8                 137     AnswerC:
-00C8 7C01            138         MOV R4, #1                       ; Define respondeu (R4) como 1
-00CA 7D03            139         MOV R5, #3                       ; Define resposta (R5) como 3
-00CC 8006            140         SJMP External1_End              ; Salta para External1_End
-00CE                 141     AnswerD:
-00CE 7C01            142         MOV R4, #1                       ; Define respondeu (R4) como 1
-00D0 7D04            143         MOV R5, #4                       ; Define resposta (R5) como 4
-00D2 8000            144         SJMP External1_End              ; Salta para External1_End
-00D4                 145     External1_End:
-00D4 32              146         RETI                             ; Retorna da interrupção externa 1
-                     147             
-                     148     ; Function to display numbers on two 7-segment displays
-                     149     ; Arguments: num1 in R5, num2 in R6
-                     150     ; Assumes segmentos array starts at label `segmentos`
-                     151     
-00D5                 152     display:
-00D5 900300          153         MOV DPTR, #segmentos            ; Load address of segmentos array
-                     154     
-00D8 ED              155         MOV A, R5                       ; Get num1
-00D9 93              156         MOVC A, @A+DPTR                 ; Load segmentos[num1]
-00DA F590            157         MOV P1, A                       ; Set D1
-                     158     
-00DC EE              159         MOV A, R6                       ; Get num2
-00DD 2408            160         ADD A, #8                       ; Offset for the second digit (segmentos array continues)
-00DF 93              161         MOVC A, @A+DPTR
-00E0 F5A0            162         MOV P2, A                       ; Set D2
-                     163     
-00E2 22              164         RET
-                     165             
-                     166     ; Function to display seconds on two 7-segment displays
-                     167     ; Argument: num in R2
+00A4 B91403          115         CJNE R1, #TempoConta, Timer0_End     ; If conta (R1) is not equal to TempoConta, jump t
+                             o Timer0_End
+                     116     
+00A7 1A              117         DEC R2                               ; Decrement segundosIniciais (R2)
+00A8 7900            118         MOV R1, #0                           ; Reset conta (R1)
+00AA                 119     Timer0_End:
+00AA 32              120         RETI
+                     121             
+                     122             
+00AB                 123     External1_Handler:
+                     124         ;JNB Pressionado, External1_End        ; Pula para External1_End se Pressionado for 0 (
+                             não pressionado)
+00AB BAFF05          125         CJNE R2, #TempoInicial, SecondsNotZero ; Pula para External1_End se segundosIniciais fo
+                             r diferente de TempoInicial
+00AE BA0002          126         CJNE R2, #0, SecondsNotZero
+00B1 8026            127             JMP External1_End
+00B3                 128     SecondsNotZero:
+                     129             ; Se chegou aqui, verifica as opções de resposta
+00B3 30B40B          130             JNB BA, AnswerA                  ; Se BA for pressionado (0), define resposta como 1
+00B6 30B50E          131             JNB BB, AnswerB                  ; Se BB for pressionado (0), define resposta como 2
+00B9 30B611          132             JNB BC, AnswerC                  ; Se BC for pressionado (0), define resposta como 3
+00BC 30B714          133             JNB BD, AnswerD                  ; Se BD for pressionado (0), define resposta como 4
+00BF 80EA            134             JMP External1_Handler                    ; Se nenhum botão foi pressionado, volta p
+                             ara o início do loop
+00C1                 135     AnswerA:
+00C1 7B01            136         MOV R3, #1                       ; Define respondeu (R3) como 1
+00C3 7C01            137         MOV R4, #1                       ; Define resposta (R4) como 1
+00C5 8012            138         JMP External1_End                ; Salta para External1_End
+00C7                 139     AnswerB:
+00C7 7B01            140         MOV R3, #1                       ; Define respondeu (R3) como 1
+00C9 7C02            141         MOV R4, #2                       ; Define resposta (R4) como 2
+00CB 800C            142         JMP External1_End                ; Salta para External1_End
+00CD                 143     AnswerC:
+00CD 7B01            144         MOV R3, #1                       ; Define respondeu (R3) como 1
+00CF 7C03            145         MOV R4, #3                       ; Define resposta (R4) como 3
+00D1 8006            146         JMP External1_End                ; Salta para External1_End
+00D3                 147     AnswerD:
+00D3 7B01            148         MOV R3, #1                       ; Define respondeu (R3) como 1
+00D5 7C04            149         MOV R4, #4                       ; Define resposta (R4) como 4
+00D7 8000            150         JMP External1_End                ; Salta para External1_End
+00D9                 151     External1_End:
+00D9 32              152         RETI                             ; Retorna da interrupção externa 1
+                     153             
+                     154             
+                     155     ; Function to display numbers on two 7-segment displays
+                     156     ; Arguments: num1 in R5, num2 in R6
+                     157     ; Assumes segmentos array starts at label `Segmentos`
+00DA                 158     display:
+00DA 900300          159         MOV DPTR, #Segmentos            ; Load address of Segmentos array
+                     160     
+00DD ED              161         MOV A, R5                       ; Get num1
+00DE 93              162         MOVC A, @A+DPTR                 ; Load Segmentos[num1]
+00DF F590            163         MOV P1, A                       ; Set D1
+                     164     
+00E1 EE              165         MOV A, R6                       ; Get num2
+00E2 93              166         MOVC A, @A+DPTR
+00E3 F5A0            167         MOV P2, A                       ; Set D2
                      168     
-00E3                 169     displaySegundos:
-00E3 EA              170         MOV A, R2
-00E4 75F00A          171         MOV B, #10
-00E7 84              172         DIV AB                          ; A = dezenas, B = unidades
-                     173     
-00E8 04              174         INC A                           ; dezenas + 1
-00E9 FD              175         MOV R5, A                       ; Pass num1 to display
-                     176     
-00EA E5F0            177         MOV A, B
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 01:03:55 PAGE     4
+00E5 22              169         RET
+                     170             
+                     171             
+                     172     ; Function to display seconds on two 7-segment displays
+                     173     ; Argument: num in R2 (seconds)
+00E6                 174     displaySegundos:
+00E6 EA              175         MOV A, R2
+00E7 75F00A          176         MOV B, #10
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 21:22:31 PAGE     4
 
-00EC 2408            178         ADD A, #8                       ; unidades + 8
-00EE FE              179         MOV R6, A                       ; Pass num2 to display
-                     180     
-00EF 11D5            181         ACALL display
-00F1 22              182         RET
-                     183             
-                     184     ; Function to indicate no response
-                     185     ; No arguments
-                     186     
-00F2                 187     semResposta:
-00F2 7B00            188         MOV R3, #0                      ; Reset conta (R3)
-00F4 7C01            189         MOV R4, #1                      ; Set respondeu (R4) to 1
-                     190     
-00F6 7D01            191         MOV R5, #1                      ; Display (1, 8)
-00F8 7E08            192         MOV R6, #8
-00FA 11D5            193         ACALL display
-                     194     
-00FC D28C            195         SETB TR0                        ; Start Timer0
-                     196     
-00FE                 197     semResposta_Loop:
-00FE EB              198         MOV A, R3
-00FF B4A008          199         CJNE A, #segundo, NoTimeout     ; Check if conta == segundo
-*** ______________________________________^
-*** WARNING #A52 IN 199 (ProjetoASM.a51, LINE 199): VALUE HAS BEEN TRUNCATED TO 8 BITS
-0102 7D00            200         MOV R5, #0                      ; Display (0, 7)
-0104 7E07            201         MOV R6, #7
-0106 11D5            202         ACALL display
-0108 C28C            203         CLR TR0                         ; Stop Timer0
-                     204     
-010A                 205     NoTimeout:
-010A 20B2F1          206         JB B1, semResposta_Loop       ; Loop while B1 (P3.2) is high (not pressed)
-                     207     
-010D 7B00            208         MOV R3, #0                      ; Reset conta (R3)
-010F 7C00            209         MOV R4, #0                      ; Reset respondeu (R4)
-0111 22              210         RET
-                     211     
-                     212     ; Function to show information on the display
-                     213     ; No arguments
+00EA 84              177         DIV AB
+                     178     
+00EB 04              179         INC A                           ; dezenas + 1
+00EC FD              180         MOV R5, A                       ; Pass num1 to display
+                     181     
+00ED E5F0            182             MOV A, B
+00EF 2408            183         ADD A, #8                       ; unidades + 8
+00F1 FE              184         MOV R6, A                       ; Pass num2 to display
+                     185     
+00F2 11DA            186         CALL display
+00F4 22              187         RET
+                     188     
+                     189     
+                     190     ; Function to indicate no response
+                     191     ; No arguments
+00F5                 192     semResposta:
+00F5 7900            193         MOV R1, #0
+00F7 7B01            194         MOV R3, #1
+                     195     
+00F9 7D01            196         MOV R5, #1                      ; Display (1, 8)
+00FB 7E08            197         MOV R6, #8
+00FD 11DA            198         CALL display
+                     199     
+00FF D28C            200         SETB TR0                        ; Start Timer0
+0101                 201     semResposta_Loop:
+0101 B9C808          202         CJNE R1, #segundo, NoTimeout     ; Check if conta == segundo
+0104 7D00            203         MOV R5, #0                      ; Display (0, 7)
+0106 7E07            204         MOV R6, #7
+0108 11DA            205         CALL display
+010A C28C            206         CLR TR0
+010C                 207     NoTimeout:
+010C 20B2F2          208         JB B1, semResposta_Loop             ; Loop while B1 (P3.2) is high (not pressed)
+                     209     
+010F 7900            210         MOV R1, #0
+0111 7B00            211         MOV R3, #0
+0113 22              212         RET
+                     213     
                      214     
-0112                 215     mostraInformacao:
-0112 7F00            216         MOV R7, #0                          ; Reset opcao (R7) to 0
-0114 7B00            217         MOV R3, #0                          ; Reset conta (R3)
-0116 D28C            218         SETB TR0                        ; Start Timer0
-                     219     
-0118                 220     mostraInformacao_Loop:
-0118 20B200          221         JB B1, mostraInformacao_Check ; Loop while B1 (P3.2) is high (not pressed)
-                     222     
-011B                 223     mostraInformacao_Check:
-011B EB              224         MOV A, R3
-011C B4A0F9          225         CJNE A, #segundo, mostraInformacao_Loop ; Check if conta == segundo
-*** ______________________________________^
-*** WARNING #A52 IN 225 (ProjetoASM.a51, LINE 225): VALUE HAS BEEN TRUNCATED TO 8 BITS
+                     215     ; Function to show information on the display
+                     216     ; No arguments
+0114                 217     mostraInformacao:
+                     218             
+0114 C28C            219             CLR TR0
+0116 75F000          220         MOV B, #0                        ; Reset opcao (R7) to 0
+0119 7900            221         MOV R1, #0                        ; Reset conta (R1)
+011B D28C            222         SETB TR0                          ; Start Timer0
+                     223     
+011D                 224     mostraInformacao_Loop:
+011D 30B220          225         JNB B1, mostraInformacao_Fim       ; Exit loop if B1 (P3.2) is pressed
                      226     
-011F EF              227         MOV A, R7
-0120 600C            228         JZ DisplaySeconds               ; If opcao == 0, display seconds
-                     229     
-0122 7D00            230         MOV R5, #0
-0124 ED              231         MOV A, R5
-0125 2411            232         ADD A, #17
-0127 FE              233         MOV R6, A
-0128 11D5            234         ACALL display                   ; Display (0, resposta + 17)
-012A 7F00            235         MOV R7, #0                          ; Set opcao to 0
-012C 80EA            236         SJMP mostraInformacao_Loop
-                     237     
-012E                 238     DisplaySeconds:
-012E EA              239         MOV A, R2
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 01:03:55 PAGE     5
+0120 B9C8FA          227         CJNE R1, #segundo, mostraInformacao_Loop ; Check if conta == segundo
+                     228             
+0123 E5F0            229             MOV A, B
+0125 B40009          230         CJNE A, #0, DisplayOption         ; If opcao is not 0, display option
+0128                 231     DisplaySeconds:
+0128 11E6            232         CALL displaySegundos              ; Display seconds
+012A 75F001          233         MOV B, #1                        ; Set opcao to 1
+012D 7900            234         MOV R1, #0                        ; Reset conta (R1)
+012F 80EC            235         JMP mostraInformacao_Loop
+                     236     
+0131                 237     DisplayOption:
+0131 7D00            238         MOV R5, #0
+0133 EC              239         MOV A, R4
+0134 2411            240         ADD A, #17
+0136 FE              241         MOV R6, A
+0137 11DA            242         CALL display                      ; Display the chosen option
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 21:22:31 PAGE     5
 
-012F 11E3            240         ACALL displaySegundos           ; Display seconds
-0131 7F01            241         MOV R7, #1                         ; Set opcao to 1
-                     242     
-0133 7B00            243         MOV R3, #0                          ; Reset conta (R3)
-0135 80E1            244         SJMP mostraInformacao_Loop
-                     245     
-0137 C28C            246         CLR TR0                         ; Stop Timer0
-0139 7B00            247         MOV R3, #0                          ; Reset conta (R3)
-013B 7C00            248         MOV R4, #0                          ; Reset respondeu (R4)
-013D 22              249         RET
-                     250     
-                     251     END
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 01:03:55 PAGE     6
+0139 75F000          243         MOV B, #0                        ; Set opcao to 0
+013C 7900            244         MOV R1, #0                        ; Reset conta (R1)
+013E 80DD            245         JMP mostraInformacao_Loop
+                     246     
+0140                 247     mostraInformacao_Fim:
+0140 C28C            248         CLR TR0                           ; Stop Timer0
+0142 7900            249         MOV R1, #0                        ; Reset conta (R1)
+0144 7B00            250         MOV R3, #0                        ; Reset respondeu (R3)
+                     251     
+0146 22              252         RET
+                     253     
+                     254     
+                     255     END
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/21/2024 21:22:31 PAGE     6
 
 SYMBOL TABLE LISTING
 ------ ----- -------
 
 
-N A M E                 T Y P E  V A L U E   ATTRIBUTES
+N A M E                T Y P E  V A L U E   ATTRIBUTES
 
-ANSWERA. . . . . . . .  C ADDR   00BCH   A   
-ANSWERB. . . . . . . .  C ADDR   00C2H   A   
-ANSWERC. . . . . . . .  C ADDR   00C8H   A   
-ANSWERD. . . . . . . .  C ADDR   00CEH   A   
-B. . . . . . . . . . .  D ADDR   00F0H   A   
-B1 . . . . . . . . . .  B ADDR   00B0H.2 A   
-BA . . . . . . . . . .  B ADDR   00B0H.4 A   
-BB . . . . . . . . . .  B ADDR   00B0H.5 A   
-BC . . . . . . . . . .  B ADDR   00B0H.6 A   
-BD . . . . . . . . . .  B ADDR   00B0H.7 A   
-CALLMOSTRAINFORMACAO .  C ADDR   0065H   A   
-CHECKRESPOSTA. . . . .  C ADDR   005CH   A   
-D1 . . . . . . . . . .  D ADDR   0090H   A   
-D2 . . . . . . . . . .  D ADDR   00A0H   A   
-DISPLAY. . . . . . . .  C ADDR   00D5H   A   
-DISPLAYSECONDS . . . .  C ADDR   012EH   A   
-DISPLAYSEGUNDOS. . . .  C ADDR   00E3H   A   
-EA . . . . . . . . . .  B ADDR   00A8H.7 A   
-ET0. . . . . . . . . .  B ADDR   00A8H.1 A   
-EX0. . . . . . . . . .  B ADDR   00A8H.0 A   
-EX1. . . . . . . . . .  B ADDR   00A8H.2 A   
-EXTERNAL0_HANDLER. . .  C ADDR   0087H   A   
-EXTERNAL0_NOTCLICKED .  C ADDR   0093H   A   
-EXTERNAL1_END. . . . .  C ADDR   00D4H   A   
-EXTERNAL1_HANDLER. . .  C ADDR   00A4H   A   
-INIT . . . . . . . . .  C ADDR   0069H   A   
-MAIN . . . . . . . . .  C ADDR   0050H   A   
-MAIN_LOOP. . . . . . .  C ADDR   0052H   A   
-MOSTRAINFORMACAO . . .  C ADDR   0112H   A   
-MOSTRAINFORMACAO_CHECK  C ADDR   011BH   A   
-MOSTRAINFORMACAO_LOOP.  C ADDR   0118H   A   
-NOTIMEOUT. . . . . . .  C ADDR   010AH   A   
-P1 . . . . . . . . . .  D ADDR   0090H   A   
-P2 . . . . . . . . . .  D ADDR   00A0H   A   
-P3 . . . . . . . . . .  D ADDR   00B0H   A   
-PRESSIONADO. . . . . .  B ADDR   00B0H.3 A   
-RESPONDEU_TRUE . . . .  C ADDR   00A3H   A   
-SEGMENTOS. . . . . . .  C ADDR   0300H   A   
-SEGUNDO. . . . . . . .  N NUMB   0FA0H   A   
-SEMRESPOSTA. . . . . .  C ADDR   00F2H   A   
-SEMRESPOSTA_LOOP . . .  C ADDR   00FEH   A   
-TEMPOCONTA . . . . . .  N NUMB   0190H   A   
-TEMPOH0. . . . . . . .  N NUMB   0006H   A   
-TEMPOINICIAL . . . . .  N NUMB   0032H   A   
-TEMPOL0. . . . . . . .  N NUMB   0006H   A   
-TH0. . . . . . . . . .  D ADDR   008CH   A   
-TIMER0_HANDLER . . . .  C ADDR   0098H   A   
-TIMER0_SKIP. . . . . .  C ADDR   00A2H   A   
-TL0. . . . . . . . . .  D ADDR   008AH   A   
-TMOD . . . . . . . . .  D ADDR   0089H   A   
-TR0. . . . . . . . . .  B ADDR   0088H.4 A   
+ANSWERA . . . . . . .  C ADDR   00C1H   A   
+ANSWERB . . . . . . .  C ADDR   00C7H   A   
+ANSWERC . . . . . . .  C ADDR   00CDH   A   
+ANSWERD . . . . . . .  C ADDR   00D3H   A   
+B . . . . . . . . . .  D ADDR   00F0H   A   
+B1. . . . . . . . . .  B ADDR   00B0H.2 A   
+BA. . . . . . . . . .  B ADDR   00B0H.4 A   
+BB. . . . . . . . . .  B ADDR   00B0H.5 A   
+BC. . . . . . . . . .  B ADDR   00B0H.6 A   
+BD. . . . . . . . . .  B ADDR   00B0H.7 A   
+CHECKMOSTRAINFORMACAO  C ADDR   0063H   A   
+CHECKRESPOSTA . . . .  C ADDR   005BH   A   
+D1. . . . . . . . . .  D ADDR   0090H   A   
+D2. . . . . . . . . .  D ADDR   00A0H   A   
+DISPLAY . . . . . . .  C ADDR   00DAH   A   
+DISPLAYOPTION . . . .  C ADDR   0131H   A   
+DISPLAYSECONDS. . . .  C ADDR   0128H   A   
+DISPLAYSEGUNDOS . . .  C ADDR   00E6H   A   
+EXTERNAL0_CLICKED . .  C ADDR   008CH   A   
+EXTERNAL0_HANDLER . .  C ADDR   0087H   A   
+EXTERNAL0_NOTCLICKED.  C ADDR   0095H   A   
+EXTERNAL1_END . . . .  C ADDR   00D9H   A   
+EXTERNAL1_HANDLER . .  C ADDR   00ABH   A   
+IE. . . . . . . . . .  D ADDR   00A8H   A   
+INIT. . . . . . . . .  C ADDR   0067H   A   
+IP. . . . . . . . . .  D ADDR   00B8H   A   
+IT0 . . . . . . . . .  B ADDR   0088H.0 A   
+IT1 . . . . . . . . .  B ADDR   0088H.2 A   
+MAIN. . . . . . . . .  C ADDR   0050H   A   
+MAIN_LOOP . . . . . .  C ADDR   0052H   A   
+MOSTRAINFORMACAO. . .  C ADDR   0114H   A   
+MOSTRAINFORMACAO_FIM.  C ADDR   0140H   A   
+MOSTRAINFORMACAO_LOOP  C ADDR   011DH   A   
+NOTIMEOUT . . . . . .  C ADDR   010CH   A   
+P1. . . . . . . . . .  D ADDR   0090H   A   
+P2. . . . . . . . . .  D ADDR   00A0H   A   
+P3. . . . . . . . . .  D ADDR   00B0H   A   
+PRESSIONADO . . . . .  B ADDR   00B0H.3 A   
+SECONDSNOTZERO. . . .  C ADDR   00B3H   A   
+SEGMENTOS . . . . . .  C ADDR   0300H   A   
+SEGUNDO . . . . . . .  N NUMB   00C8H   A   
+SEMRESPOSTA . . . . .  C ADDR   00F5H   A   
+SEMRESPOSTA_LOOP. . .  C ADDR   0101H   A   
+TEMPOCONTA. . . . . .  N NUMB   0014H   A   
+TEMPOH0 . . . . . . .  N NUMB   0006H   A   
+TEMPOINICIAL. . . . .  N NUMB   00FFH   A   
+TEMPOL0 . . . . . . .  N NUMB   0006H   A   
+TH0 . . . . . . . . .  D ADDR   008CH   A   
+TIMER0_END. . . . . .  C ADDR   00AAH   A   
+TIMER0_HANDLER. . . .  C ADDR   009AH   A   
+TL0 . . . . . . . . .  D ADDR   008AH   A   
+TMOD. . . . . . . . .  D ADDR   0089H   A   
+TR0 . . . . . . . . .  B ADDR   0088H.4 A   
 
 
 REGISTER BANK(S) USED: 0 
 
 
-ASSEMBLY COMPLETE.  3 WARNING(S), 0 ERROR(S)
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

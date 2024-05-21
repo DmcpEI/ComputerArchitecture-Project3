@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 15:39:16 PAGE 1   
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/21/2024 16:31:54 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE PROJETOC
@@ -62,7 +62,7 @@ line level    source
   50          sbit D2E = P2^4;
   51          sbit D2F = P2^5;
   52          sbit D2G = P2^6;
-C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 15:39:16 PAGE 2   
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/21/2024 16:31:54 PAGE 2   
 
   53          sbit D2DF = P2^7;
   54          
@@ -126,7 +126,7 @@ line level    source
  110   1        TL0 = TempoL;
  111   1        
  112   1        IT0 = 1; // Interrupcao externa 0 activa a falling edge
-C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 15:39:16 PAGE 3   
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/21/2024 16:31:54 PAGE 3   
 
  113   1        IT1 = 1; // Interrupcao externa 1 activa a falling edge
  114   1        TR0 = 0; // Timer 0 nao comeca
@@ -152,134 +152,132 @@ line level    source
  134          void External1 (void) interrupt 2
  135          {
  136   1        while(!Pressionado && segundosIniciais != TempoInicial && segundosIniciais != 0){
- 137   2          if (segundosIniciais != TempoInicial && segundosIniciais != 0){
- 138   3            if (!BA){
- 139   4              respondeu = 1;
- 140   4              resposta = 1;
- 141   4            } else if (!BB){
- 142   4              respondeu = 1;
- 143   4              resposta = 2;
- 144   4            } else if (!BC){
- 145   4              respondeu = 1;
- 146   4              resposta = 3;
- 147   4            } else if (!BD){
- 148   4              respondeu = 1;
- 149   4              resposta = 4;
- 150   4            }
- 151   3          }
- 152   2        }
- 153   1      }
- 154          
- 155          void Timer0_ISR (void) interrupt 1 
- 156          {
- 157   1        conta++;
- 158   1      
- 159   1        if (!respondeu){
- 160   2          if (conta == 400){
- 161   3            segundosIniciais--;
- 162   3            conta=0;
- 163   3          }
- 164   2        }
- 165   1      }
- 166          
- 167          void display (int num1, int num2)
- 168          {
- 169   1        D1A = segments[num1][0];
- 170   1        D1B = segments[num1][1];
- 171   1        D1C = segments[num1][2];
- 172   1        D1D = segments[num1][3];
- 173   1        D1E = segments[num1][4];
- 174   1        D1F = segments[num1][5];
-C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 15:39:16 PAGE 4   
+ 137   2          if (!BA){
+ 138   3            respondeu = 1;
+ 139   3            resposta = 1;
+ 140   3          } else if (!BB){
+ 141   3            respondeu = 1;
+ 142   3            resposta = 2;
+ 143   3          } else if (!BC){
+ 144   3            respondeu = 1;
+ 145   3            resposta = 3;
+ 146   3          } else if (!BD){
+ 147   3            respondeu = 1;
+ 148   3            resposta = 4;
+ 149   3          }
+ 150   2        }
+ 151   1      }
+ 152          
+ 153          void Timer0_ISR (void) interrupt 1 
+ 154          {
+ 155   1        conta++;
+ 156   1      
+ 157   1        if (!respondeu){
+ 158   2          if (conta == 400){
+ 159   3            segundosIniciais--;
+ 160   3            conta=0;
+ 161   3          }
+ 162   2        }
+ 163   1      }
+ 164          
+ 165          void display (int num1, int num2)
+ 166          {
+ 167   1        D1A = segments[num1][0];
+ 168   1        D1B = segments[num1][1];
+ 169   1        D1C = segments[num1][2];
+ 170   1        D1D = segments[num1][3];
+ 171   1        D1E = segments[num1][4];
+ 172   1        D1F = segments[num1][5];
+ 173   1        D1G = segments[num1][6];
+ 174   1        D1DF = segments[num1][7];
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/21/2024 16:31:54 PAGE 4   
 
- 175   1        D1G = segments[num1][6];
- 176   1        D1DF = segments[num1][7];
- 177   1      
- 178   1        D2A = segments[num2][0];
- 179   1        D2B = segments[num2][1];
- 180   1        D2C = segments[num2][2];
- 181   1        D2D = segments[num2][3];
- 182   1        D2E = segments[num2][4];
- 183   1        D2F = segments[num2][5];
- 184   1        D2G = segments[num2][6];
- 185   1        D2DF = segments[num2][7];
- 186   1      }
- 187          
- 188          void displaySegundos (int num)
- 189          {
- 190   1          int dezenas = num / 10;
- 191   1          int unidades = num % 10;
- 192   1      
- 193   1          display(dezenas+1, unidades+8);
- 194   1      }
- 195          
- 196          void semResposta (void)
- 197          {
- 198   1        conta = 0;
- 199   1        respondeu = 1;
- 200   1        display(1, 8);
- 201   1        TR0 = 1;
- 202   1        
- 203   1        do {
- 204   2      
- 205   2          // Verifica se o tempo excedeu o limite
- 206   2          if (conta == segundo) {
- 207   3              display(0, 7); // Exibir algo indicando que o tempo acabou (ou sem resposta)
- 208   3              TR0 = 0; // Parar o timer
- 209   3          }
- 210   2        } while (B1); // Continua no loop enquanto B1 est� em n�vel alto (n�o pressionado)
- 211   1        
- 212   1        conta = 0;
- 213   1        respondeu = 0;
- 214   1      }
- 215          
- 216          void mostraInformacao(void)
- 217          {
- 218   1        bit opcao = 0;
- 219   1        conta = 0;
- 220   1        TR0 = 1;
- 221   1        
- 222   1        while (B1){
- 223   2          if (conta == segundo){
- 224   3            if (opcao == 0){
- 225   4              displaySegundos(segundosIniciais);
- 226   4              opcao = 1;
- 227   4            } else {
- 228   4              display(0, resposta+17);
- 229   4              opcao = 0;
- 230   4            }
- 231   3            conta = 0;
- 232   3          }
- 233   2        }
- 234   1        
- 235   1        TR0 = 0;
- 236   1        conta = 0;
-C51 COMPILER V9.60.7.0   PROJETOC                                                          05/20/2024 15:39:16 PAGE 5   
+ 175   1      
+ 176   1        D2A = segments[num2][0];
+ 177   1        D2B = segments[num2][1];
+ 178   1        D2C = segments[num2][2];
+ 179   1        D2D = segments[num2][3];
+ 180   1        D2E = segments[num2][4];
+ 181   1        D2F = segments[num2][5];
+ 182   1        D2G = segments[num2][6];
+ 183   1        D2DF = segments[num2][7];
+ 184   1      }
+ 185          
+ 186          void displaySegundos (int num)
+ 187          {
+ 188   1          int dezenas = num / 10;
+ 189   1          int unidades = num % 10;
+ 190   1      
+ 191   1          display(dezenas+1, unidades+8);
+ 192   1      }
+ 193          
+ 194          void semResposta (void)
+ 195          {
+ 196   1        conta = 0;
+ 197   1        respondeu = 1;
+ 198   1        display(1, 8);
+ 199   1        TR0 = 1;
+ 200   1        
+ 201   1        do {
+ 202   2      
+ 203   2          // Verifica se o tempo excedeu o limite
+ 204   2          if (conta == segundo) {
+ 205   3              display(0, 7); // Exibir algo indicando que o tempo acabou (ou sem resposta)
+ 206   3              TR0 = 0; // Parar o timer
+ 207   3          }
+ 208   2        } while (B1); // Continua no loop enquanto B1 est� em n�vel alto (n�o pressionado)
+ 209   1        
+ 210   1        conta = 0;
+ 211   1        respondeu = 0;
+ 212   1      }
+ 213          
+ 214          void mostraInformacao(void)
+ 215          {
+ 216   1        bit opcao = 0;
+ 217   1        conta = 0;
+ 218   1        TR0 = 1;
+ 219   1        
+ 220   1        while (B1){
+ 221   2          if (conta == segundo){
+ 222   3            if (opcao == 0){
+ 223   4              displaySegundos(segundosIniciais);
+ 224   4              opcao = 1;
+ 225   4            } else {
+ 226   4              display(0, resposta+17);
+ 227   4              opcao = 0;
+ 228   4            }
+ 229   3            conta = 0;
+ 230   3          }
+ 231   2        }
+ 232   1        
+ 233   1        TR0 = 0;
+ 234   1        conta = 0;
+ 235   1        respondeu = 0;
+ 236   1      }
+C51 COMPILER V9.60.7.0   PROJETOC                                                          05/21/2024 16:31:54 PAGE 5   
 
- 237   1        respondeu = 0;
- 238   1      }
- 239          
- 240          void main (void)
- 241          {
- 242   1        Init();
- 243   1        
- 244   1        while(1){
+ 237          
+ 238          void main (void)
+ 239          {
+ 240   1        Init();
+ 241   1        
+ 242   1        while(1){
+ 243   2          
+ 244   2          displaySegundos(segundosIniciais);
  245   2          
- 246   2          displaySegundos(segundosIniciais);
- 247   2          
- 248   2          if (segundosIniciais <= 0){
- 249   3            semResposta();
- 250   3          }
- 251   2      
- 252   2          if (respondeu && segundosIniciais < TempoInicial){
- 253   3            mostraInformacao();
- 254   3          }
- 255   2        }
- 256   1      }
+ 246   2          if (segundosIniciais <= 0){
+ 247   3            semResposta();
+ 248   3          }
+ 249   2      
+ 250   2          if (respondeu && segundosIniciais < TempoInicial){
+ 251   3            mostraInformacao();
+ 252   3          }
+ 253   2        }
+ 254   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1012    ----
+   CODE SIZE        =    998    ----
    CONSTANT SIZE    =    352    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----

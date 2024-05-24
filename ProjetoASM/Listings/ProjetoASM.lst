@@ -1,4 +1,4 @@
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/23/2024 14:49:41 PAGE     1
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/24/2024 16:54:06 PAGE     1
 
 
 MACRO ASSEMBLER A51 V8.2.7.0
@@ -65,7 +65,7 @@ LOC  OBJ            LINE     SOURCE
 0050                  48     main:
 0050 1169             49         CALL Init                       ; Initialize the system
 0052                  50     main_loop:
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/23/2024 14:49:41 PAGE     2
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/24/2024 16:54:06 PAGE     2
 
 0052 C242             51             CLR OpcaoB1
 0054 11F4             52         CALL displaySegundos            ; Display the current seconds
@@ -133,7 +133,7 @@ LOC  OBJ            LINE     SOURCE
 00A5 32              112         RETI
                      113     
                      114     
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/23/2024 14:49:41 PAGE     3
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/24/2024 16:54:06 PAGE     3
 
 00A6                 115     Timer0_Handler:
 00A6 0F              116         INC R7                               ; Increment the counter for 20 interruptions
@@ -201,7 +201,7 @@ LOC  OBJ            LINE     SOURCE
 00EF EE              174         MOV A, R6                       ; Get num2
 00F0 93              175         MOVC A, @A+DPTR
 00F1 F5A0            176         MOV P2, A                       ; Set D2
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/23/2024 14:49:41 PAGE     4
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/24/2024 16:54:06 PAGE     4
 
                      177     
 00F3 22              178         RET
@@ -269,7 +269,7 @@ LOC  OBJ            LINE     SOURCE
 013A 11E8            240         CALL display
 013C 75F000          241             MOV B, #0
 013F 7900            242             MOV R1, #0
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/23/2024 14:49:41 PAGE     5
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/24/2024 16:54:06 PAGE     5
 
 0141 80D9            243             JMP semResposta_Loop
                      244             
@@ -286,7 +286,7 @@ LOC  OBJ            LINE     SOURCE
                      255             
 014A C28C            256             CLR TR0
 014C 75F000          257         MOV B, #0                        ; Reset opcao (R7) to 0
-014F 7900            258         MOV R1, #0                        ; Reset conta (R1)
+014F 7900            258         MOV R1, #0
                      259             
 0151 D240            260             SETB ClicouB1   
                      261             
@@ -329,7 +329,7 @@ LOC  OBJ            LINE     SOURCE
                      298     
                      299     
                      300     END
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/23/2024 14:49:41 PAGE     6
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/24/2024 16:54:06 PAGE     6
 
 SYMBOL TABLE LISTING
 ------ ----- -------
@@ -397,7 +397,7 @@ TH0 . . . . . . . . .  D ADDR   008CH   A
 TIMER0_END. . . . . .  C ADDR   00B6H   A   
 TIMER0_HANDLER. . . .  C ADDR   00A6H   A   
 TL0 . . . . . . . . .  D ADDR   008AH   A   
-A51 MACRO ASSEMBLER  PROJETOASM                                                           05/23/2024 14:49:41 PAGE     7
+A51 MACRO ASSEMBLER  PROJETOASM                                                           05/24/2024 16:54:06 PAGE     7
 
 TMOD. . . . . . . . .  D ADDR   0089H   A   
 TR0 . . . . . . . . .  B ADDR   0088H.4 A   

@@ -52,20 +52,32 @@ sbit D2F = P2^5;
 sbit D2G = P2^6;
 sbit D2DF = P2^7;
 
-//conta = 1 -> 250 microsegundos
-//conta = 400 -> 0.1 segundo
+// conta = 1 -> 250 microsegundos
+// conta = 400 -> 0.1 segundo
+// Conta interrupcoes do timer 0
 unsigned int conta = 0;
+
 // Tempo inicial de 5.0 segundos
 int segundosIniciais = TempoInicial;
+
 // Resposta do participante (1->A, 2->B, 3->C ou 4->D)
 int resposta = 0;
 
+// Variavel de controlo que se mudar de valor o botão B1 foi clicado
 bit clicouB1 = 0;
-// Esta a '0' se esta a ser mostrado o tempo inicial nos displays (Nao foi clicado no botao B1)
-// Esta a '1' se informa��o com o tempo/resposta do participante esteja a ser mostrada nos displays (Ja foi clicado no botao B1)
+
+/*
+Variavel de controlo para o botao B1 para escolher a acao a ser tomada
+Esta a '0' se esta a ser mostrado o tempo inicial nos displays (Nao foi clicado no botao B1)
+Esta a '1' se informacao com o tempo/resposta do participante esteja a ser mostrada nos displays (Ja foi clicado no botao B1)
+*/
 bit opcaoB1 = 0;
-// Esta a '0' se o participante ainda nao respondeu (Não clicou numa das opcoes de resposta durante os 5.0 segundos)
-// Esta a '1' se o participante ja respondeu (Clicou numa das opcoes de resposta durante os 5.0 segundos)
+
+/*
+Variavel de controlo para o botao B1 para escolher a acao a ser tomada
+Esta a '0' se o participante ainda nao respondeu (Não clicou numa das opcoes de resposta durante os 5.0 segundos)
+Esta a '1' se o participante ja respondeu (Clicou numa das opcoes de resposta durante os 5.0 segundos)
+*/
 bit respondeu = 0;
 
 // Segmentos dos displays com todos os numeros, simbolos e letras
@@ -101,14 +113,14 @@ void Init (void)
 	EA = 1; // Ativa as interrupcoes globais
 	ET0 = 1; // Ativa a interrupcao timer 0
 	EX0 = 1; // Ativa a interrupcao externa 0
-	EX1 = 0;
+	EX1 = 0; // Desativa a interrupcao externa 1
 	
 	// Timer no modo 2, de 8 bits com auto-reload
 	TMOD &= 0xF0; // Limpa os bits menos significativos
 	TMOD |= 0x02; // Timer 0 no modo 2
 	
-	TH0 = TempoH;
-	TL0 = TempoL;
+	TH0 = TempoH; // Inicializa o valor de TH0
+	TL0 = TempoL; // Inicializa o valor de TL0 (6 microsegundos)
 	
 	IT0 = 1; // Interrupcao externa 0 activa a falling edge
 	IT1 = 1; // Interrupcao externa 1 activa a falling edge
@@ -118,19 +130,21 @@ void Init (void)
 // Interrupcao externa 0
 void External0 (void) interrupt 0 
 {
+	// Inverte o valor da variavel de controlo 'clicouB1'
 	clicouB1 = ~clicouB1;
-	// Se o botao B1 foi clicado
+
+	// Se a variavel de controlo 'opcao1' estiver a 1
 	if(opcaoB1){
-		IE0 = 0;
-		EX1 = 0;
+		IE0 = 0; // Limpa a flag da interrupcao externa 0
+		EX1 = 0; // Desativa a interrupcao externa 1
 		TR0 = 0; // Timer0 para de contar o tempo
-		segundosIniciais = TempoInicial;
-		conta = 0;
+		segundosIniciais = TempoInicial; // Repoe o tempo inicial de 5.0 segundos
+		conta = 0; // Repoe a contagem de interrupcoes do timer 0
 	} 
 	else {
-		EX0 = 0;
-		IE1 = 0;
-		EX1 = 1;
+		EX0 = 0; // Desativa a interrupcao externa 0
+		IE1 = 0; // Limpa a flag da interrupcao externa 1
+		EX1 = 1; // Ativa a interrupcao externa 1
 		TR0 = 1; // Timer0 comeca a contar tempo
 	}
 }
@@ -138,38 +152,49 @@ void External0 (void) interrupt 0
 // Interrupcao externa 1
 void External1 (void) interrupt 2
 {
-	EX1 = 0;
+	EX1 = 0; // Desativa a interrupcao externa 1
+	// Enquanto o botao de opcao de resposta estiver pressionado, o tempo tiver comecado a contar e nao tiver terminado
 	while(!Pressionado && segundosIniciais != TempoInicial && segundosIniciais != 0){
+		// Se a opcao de resposta A for pressionada
 		if (!BA){
-			respondeu = 1;
-			resposta = 1;
-		} else if (!BB){
+			respondeu = 1; // A variavel de controlo 'respondeu' passa a 1
+			resposta = 1; // A resposta do participante e a opcao A
+
+		} else if (!BB){ // Se a opcao de resposta B for pressionada
 			respondeu = 1;
 			resposta = 2;
-		} else if (!BC){
+
+		} else if (!BC){ // Se a opcao de resposta C for pressionada
 			respondeu = 1;
 			resposta = 3;
-		} else if (!BD){
+
+		} else if (!BD){ // Se a opcao de resposta D for pressionadaß
+
 			respondeu = 1;
 			resposta = 4;
 		}
 	}
 }
 
+// Interrupcao do timer 0
 void Timer0_ISR (void) interrupt 1 
 {
-	conta++;
+	conta++; // Incrementa a variavel 'conta' a cada interrupcao do timer 0
 
+	// Se a variavel de controlo 'respondeu' estiver a 0
 	if (!respondeu){
+		// Se a contagem de interrupcoes do timer 0 for igual a 400 (0.1 segundo)
 		if (conta == 400){
-			segundosIniciais--;
-			conta=0;
+			segundosIniciais--; // Decrementa o tempo atual
+			conta=0; // Recomeca a contagem de interrupcoes do timer 0
 		}
 	}
 }
 
+// Mostra o caracter correspondente ao lugar do segmento no display
 void display (int num1, int num2)
 {
+	// Segmentos do display D1
 	D1A = segments[num1][0];
 	D1B = segments[num1][1];
 	D1C = segments[num1][2];
@@ -179,6 +204,7 @@ void display (int num1, int num2)
 	D1G = segments[num1][6];
 	D1DF = segments[num1][7];
 
+	// Segmentos do display D2
 	D2A = segments[num2][0];
 	D2B = segments[num2][1];
 	D2C = segments[num2][2];
@@ -189,96 +215,119 @@ void display (int num1, int num2)
 	D2DF = segments[num2][7];
 }
 
+// Mostra os segundos nos displays
 void displaySegundos (int num)
 {
+	// Calcula as dezenas e unidades do numero
     int dezenas = num / 10;
     int unidades = num % 10;
 
-		display(dezenas+1, unidades+8);
+	// Mostra o numero nos displays
+	display(dezenas+1, unidades+8);
 }
 
+// Mostra a resposta nos displays
 void semResposta (void)
 {
-	bit opcao = 0;
-	conta = 0;
-	respondeu = 1;
+	bit opcao = 0; // Variavel de controlo para a opcao a ser mostrada
+	conta = 0; // Reseta a contagem de interrupcoes do timer 0
+	respondeu = 1; // A variavel de controlo 'respondeu' passa a 1
 	
-	clicouB1 = 1;
-	IE0 = 0;
-	EX0 = 1;
-	EX1 = 0;
+	clicouB1 = 1; // A variavel de controlo 'clicouB1' passa a 1
+	IE0 = 0; // Limpa a flag da interrupcao externa 0
+	EX0 = 1; // Ativa a interrupcao externa 0
+	EX1 = 0; // Desativa a interrupcao externa 1
 	
-	TR0 = 1;
+	TR0 = 1; // Timer0 comeca a contar tempo
 	
+	// Mostra o valor final do tempo nos displays (0.0)
 	display(1,8);
 	
+	// Enquanto o botao B1 nao for clicado
 	while(clicouB1){
+		// Se a contagem de interrupcoes do timer 0 for igual a 4000 (1 segundo)
 		if (conta == segundo){
+			// Se a opcao for 0
 			if (opcao == 0){
+				// Mostra a resposta indefinida nos displays
 				display(0, 7);
-				opcao = 1;
-			} else {
+				opcao = 1; // A opcao passa a 1
+			} else { // Se a opcao for 1
+				// Mostra o valor final do tempo nos displays (0.0)
 				display(1, 8);
-				opcao = 0;
+				opcao = 0; // A opcao passa a 0
 			}
-			conta = 0;
+			conta = 0; // Reseta a contagem de interrupcoes do timer 0
 		}
-		opcaoB1 = 1;
+		opcaoB1 = 1; // A variavel de controlo 'opcaoB1' passa a 1
 	}
 	
-	TR0 = 0;
-	conta = 0;
-	respondeu = 0;
+	TR0 = 0; // Timer0 para de contar tempo
+	conta = 0; // Reseta a contagem de interrupcoes do timer 0
+	respondeu = 0; // A variavel de controlo 'respondeu' passa a 0
 }
 
+// Mostra a informacao nos displays
 void mostraInformacao(void)
 {
-	bit opcao = 0;
-	conta = 0;
-	//respondeu = 1;
+	bit opcao = 0; // Variavel de controlo para a opcao a ser mostrada
+	conta = 0; // Reseta a contagem de interrupcoes do timer 0
 	
-	clicouB1 = 1;
-	IE0 = 0;
-	EX0 = 1;
-	EX1 = 0;
+	clicouB1 = 1; // A variavel de controlo 'clicouB1' passa a 1
+	IE0 = 0; // Limpa a flag da interrupcao externa 0
+	EX0 = 1; // Ativa a interrupcao externa 0
+	EX1 = 0; // Desativa a interrupcao externa 1
 	
-	TR0 = 1;
+	TR0 = 1; // Timer0 comeca a contar tempo
 	
+	// Enquanto o botao B1 nao for clicado
 	while (clicouB1){
+		// Se a contagem de interrupcoes do timer 0 for igual a 4000 (1 segundo)
 		if (conta == segundo){
+			// Se a opcao for 0
 			if (opcao == 0){
+				// Mostra o tempo em que clicou na resposta nos displays
 				displaySegundos(segundosIniciais);
 				opcao = 1;
-			} else {
+			} else { // Se a opcao for 1
+				// Mostra a resposta do participante nos displays
 				display(0, resposta+17);
 				opcao = 0;
 			}
-			conta = 0;
+			conta = 0; // Reseta a contagem de interrupcoes do timer 0
 		}
-		opcaoB1 = 1;
+		opcaoB1 = 1; // A variavel de controlo 'opcaoB1' passa a 1
 	}
 	
-	TR0 = 0;
-	conta = 0;
-	respondeu = 0;
+	TR0 = 0; // Timer0 para de contar tempo
+	conta = 0; // Reseta a contagem de interrupcoes do timer 0
+	respondeu = 0; // A variavel de controlo 'respondeu' passa a 0
 }
 
+// Funcao principal
 void main (void)
 {
+	// Inicializacao do sistema
 	Init();
 	
+	// Ciclo infinito
 	while(1){
 		
+		// Mostra o tempo atual nos displays
 		displaySegundos(segundosIniciais);
 		
+		// Se o tempo chegar ao fim
 		if (segundosIniciais <= 0){
+			// Funcao que mostra a resposta indefinida e o tempo final nos displays
 			semResposta();
 		}
 
+		// Se clicou em algum dos botoes de opcao de resposta e o tempo ainda nao chegou ao fim
 		if (respondeu && segundosIniciais < TempoInicial){
+			// Funcao que mostra a resposta e o tempo de resposta nos displays
 			mostraInformacao();
 		}
 		
-		opcaoB1 = 0;
+		opcaoB1 = 0; // A variavel de controlo 'opcaoB1' passa a 0
 	}
 }
